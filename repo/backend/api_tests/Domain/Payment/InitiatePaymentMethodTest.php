@@ -21,7 +21,7 @@ function paymentMethodTestOrder(User $user): int
 }
 
 test('POST /payments/initiate accepts each PaymentMethod enum value', function (string $method) {
-    $user     = User::factory()->create(['status' => AccountStatus::Active]);
+    $user     = User::factory()->asRegistrar()->create(['status' => AccountStatus::Active]);
     $orderId  = paymentMethodTestOrder($user);
 
     $response = $this->actingAs($user)
@@ -35,7 +35,7 @@ test('POST /payments/initiate accepts each PaymentMethod enum value', function (
 })->with(array_map(fn (PaymentMethod $m) => $m->value, PaymentMethod::cases()));
 
 test('POST /orders/{id}/payment rejects invalid payment method', function () {
-    $user    = User::factory()->create(['status' => AccountStatus::Active]);
+    $user    = User::factory()->asRegistrar()->create(['status' => AccountStatus::Active]);
     $orderId = paymentMethodTestOrder($user);
 
     $this->actingAs($user)

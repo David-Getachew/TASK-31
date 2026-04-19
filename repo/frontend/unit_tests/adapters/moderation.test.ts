@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest'
+import { beforeEach, describe, it, expect, vi } from 'vitest'
 
 vi.mock('../../src/adapters/http', () => ({
   default: {
@@ -11,6 +11,10 @@ import http from '../../src/adapters/http'
 import { moderationAdapter } from '../../src/adapters/moderation'
 
 describe('moderationAdapter', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
   it('queue calls GET /admin/moderation/queue', async () => {
     vi.mocked(http.get).mockResolvedValueOnce({ data: { data: [] } } as any)
     await moderationAdapter.queue()

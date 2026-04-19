@@ -31,6 +31,14 @@ test.describe('Catalog and order flow', () => {
     // Either order detail loads or an error state shows
     const heading = page.locator('h1')
     const errorState = page.locator('.error-state[role="alert"]')
+    await expect
+      .poll(async () => {
+        const headingVisible = await heading.isVisible().catch(() => false)
+        const errorVisible = await errorState.isVisible().catch(() => false)
+        return headingVisible || errorVisible
+      }, { timeout: 10000 })
+      .toBeTruthy()
+
     const headingVisible = await heading.isVisible().catch(() => false)
     if (!headingVisible) {
       await expect(errorState).toBeVisible()

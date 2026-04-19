@@ -4,13 +4,11 @@ declare(strict_types=1);
 
 use App\Enums\AccountStatus;
 use App\Enums\EnrollmentStatus;
-use App\Enums\RoleName;
 use App\Models\Course;
 use App\Models\Enrollment;
 use App\Models\Section;
 use App\Models\Term;
 use App\Models\User;
-use App\Models\UserRole;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
@@ -59,24 +57,17 @@ test('student not associated with a term gets 403 on term detail', function () {
         ->assertForbidden();
 });
 
-test('teacher scoped to course of a different term cannot view other term', function () {
-    $teacher = User::factory()->create(['status' => AccountStatus::Active]);
+test('teacher scoped to course cannot view term detail endpoints directly', function () {
     $term1   = Term::factory()->create();
     $term2   = Term::factory()->create();
     $course1 = Course::factory()->for($term1)->create();
-
-    UserRole::create([
-        'user_id'    => $teacher->id,
-        'role'       => RoleName::Teacher,
-        'scope_type' => 'course',
-        'scope_id'   => $course1->id,
-    ]);
+    $teacher = User::factory()->asScopedTeacher('course', $course1->id)->create(['status' => AccountStatus::Active]);
 
     $this->actingAs($teacher)->getJson("/api/v1/terms/{$term2->id}")
         ->assertForbidden();
 
     $this->actingAs($teacher)->getJson("/api/v1/terms/{$term1->id}")
-        ->assertOk();
+        ->assertForbidden();
 });
 
 test('unauthenticated GET /terms returns 401', function () {

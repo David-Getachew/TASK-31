@@ -179,7 +179,8 @@ test('admin reconciliation summary endpoint is covered with aggregate assertions
 });
 
 test('appointment list show and update endpoints are covered with data assertions', function () {
-    $owner = User::factory()->create(['status' => AccountStatus::Active]);
+    $staff = User::factory()->asRegistrar()->create(['status' => AccountStatus::Active]);
+    $owner = $staff;
 
     $appointment = Appointment::factory()->create([
         'owner_user_id' => $owner->id,
@@ -187,16 +188,16 @@ test('appointment list show and update endpoints are covered with data assertion
         'status' => AppointmentStatus::Scheduled,
     ]);
 
-    $this->actingAs($owner)->getJson('/api/v1/appointments')
+    $this->actingAs($staff)->getJson('/api/v1/appointments')
         ->assertStatus(200)
         ->assertJsonPath('data.data.0.id', $appointment->id);
 
-    $this->actingAs($owner)->getJson("/api/v1/appointments/{$appointment->id}")
+    $this->actingAs($staff)->getJson("/api/v1/appointments/{$appointment->id}")
         ->assertStatus(200)
         ->assertJsonPath('data.id', $appointment->id)
         ->assertJsonPath('data.owner.id', $owner->id);
 
-    $this->actingAs($owner)->patchJson("/api/v1/appointments/{$appointment->id}", [
+    $this->actingAs($staff)->patchJson("/api/v1/appointments/{$appointment->id}", [
         'status' => AppointmentStatus::Rescheduled->value,
         'notes' => 'Moved to next slot',
     ])->assertStatus(200)
@@ -301,12 +302,10 @@ test('roster import history and show endpoints are covered', function () {
 });
 
 test('section list and grade item list update endpoints are covered', function () {
-    $user = User::factory()->create(['status' => AccountStatus::Active]);
+    $user = User::factory()->asAdmin()->create(['status' => AccountStatus::Active]);
     $term = Term::factory()->create();
     $course = Course::factory()->for($term)->create();
     $section = Section::factory()->for($course)->create(['term_id' => $term->id]);
-
-    Enrollment::factory()->for($user)->for($section)->create();
 
     $item = GradeItem::factory()->for($section)->create([
         'title' => 'Coverage Quiz',
