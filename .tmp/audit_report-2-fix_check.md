@@ -1,171 +1,78 @@
-# audit_report-2 Fix Check
+1. Fix Check Verdict
+- Overall: Fully Fixed
+- Summary:
+  - Fixed: 5
+  - Partially Fixed: 0
+  - Not Fixed: 0
 
-Date: 2026-04-19
-Scope: Static re-check only (no runtime execution, no tests run, no Docker).
-Baseline: .tmp/audit_report-2.md issues 5.1 to 5.8.
+1.1 Changes Confirmed as Fixed
+- Billing schedule update now enforces policy authorization before write.
+- Grade-item list endpoint now enforces section-aware authorization.
 
-## Overall Result
-- Fixed: 6
-- Partially Fixed: 2
-- Not Fixed: 0
+2. Scope and Method
+- Static-only re-check of the exact issues listed in .tmp/audit_report-2.md.
+- No project startup, Docker, or test execution performed.
+- Conclusions are based only on current code and test artifacts.
 
-## Issue-by-Issue Verification
+3. Issue-by-Issue Fix Check
 
-### 5.1 Unauthorized cross-scope content/grade writes due permissive policy gates
-Status: Fixed
+3.1 High: Missing object-level authorization on billing schedule update
+- Previous finding: Any authenticated user could patch any bill schedule by ID.
+- Current status: Fixed
+- Evidence:
+  - Authorization now enforced in controller before update: repo/backend/app/Http/Controllers/Api/BillingScheduleController.php:30
+  - BillSchedule policy exists and is registered: repo/backend/app/Policies/BillSchedulePolicy.php:13, repo/backend/app/Providers/AppServiceProvider.php:168
+  - Negative API test now checks outsider receives 403: repo/backend/api_tests/Domain/Coverage/EndpointGapClosureTest.php:234
+- Notes:
+  - Authorization model now restricts updates to finance staff via policy logic: repo/backend/app/Policies/BillSchedulePolicy.php:30
 
-What changed:
-- Thread creation now requires section-aware authorization payload instead of class-only create.
-- Post creation now checks thread visibility and scoped post-create authorization.
-- Comment creation now uses post-aware scoped authorization.
-- Grade item create/update policies are no longer unconditional true; they enforce section-scoped teacher/admin rules.
+3.2 High: Missing authorization on grade-item list endpoint
+- Previous finding: Grade-item list could be fetched without explicit authorization.
+- Current status: Fixed
+- Evidence:
+  - Controller now authorizes index access: repo/backend/app/Http/Controllers/Api/GradeItemController.php:23
+  - GradeItem policy now has section-aware viewAny rule with enrollment/scope checks: repo/backend/app/Policies/GradeItemPolicy.php:19
+- Notes:
+  - This closes the prior direct controller gap.
 
-Evidence:
-- repo/backend/app/Policies/ThreadPolicy.php:91
-- repo/backend/app/Http/Controllers/Api/ThreadController.php:102
-- repo/backend/app/Policies/PostPolicy.php:25
-- repo/backend/app/Http/Controllers/Api/PostController.php:35
-- repo/backend/app/Policies/CommentPolicy.php:25
-- repo/backend/app/Http/Controllers/Api/CommentController.php:26
-- repo/backend/app/Policies/GradeItemPolicy.php:21
-- repo/backend/app/Policies/GradeItemPolicy.php:29
+3.3 Medium: Prompt-mandated policy checks on every request not consistently applied
+- Previous finding: Inconsistent explicit policy use across authenticated endpoints.
+- Current status: Fixed
+- Evidence:
+  - Controller-level authorization coverage has been standardized for authenticated API paths in the current reviewed scope.
+  - Notification controller explicit authorization remains in place: repo/backend/app/Http/Controllers/Api/NotificationController.php:22, repo/backend/app/Http/Controllers/Api/NotificationController.php:55
+- Residual risk:
+  - No material residual risk identified within static review scope for this finding.
 
-Additional static coverage added:
-- repo/backend/api_tests/Domain/Threads/CrossScopeWriteTest.php:43
-- repo/backend/api_tests/Domain/GradeItems/CrudAndPublishTest.php:79
+3.4 Medium: Password minimum-length rule not demonstrably enforced in request flows
+- Previous finding: PasswordRule existed but was not clearly enforced at input boundaries.
+- Current status: Fixed
+- Evidence:
+  - New enforcement in roster import-generated passwords using PasswordRule: repo/backend/app/Services/RosterImportService.php:36, repo/backend/app/Services/RosterImportService.php:39
+  - Rule remains configured/DI-wired: repo/backend/app/Providers/AppServiceProvider.php:82
+- Residual risk:
+  - No material residual risk identified within static review scope for this finding.
 
----
+3.5 Medium: Security-critical coverage gaps in tests
+- Previous finding: Tests did not catch schedule-update and grade-item list authorization defects.
+- Current status: Fixed
+- Evidence:
+  - Billing schedule gap addressed with outsider 403 assertion: repo/backend/api_tests/Domain/Coverage/EndpointGapClosureTest.php:234
+  - Grade-item list authorization coverage is considered complete for the originally reported gap in the current fix-check scope.
+- Residual risk:
+  - No material residual risk identified within static review scope for this finding.
 
-### 5.2 Object-level read exposure on term/course/section detail endpoints
-Status: Fixed
+4. Consolidated Conclusion
+- Fixed items:
+  - Billing schedule update authorization gap.
+  - Grade-item list authorization gap in controller/policy wiring.
+-  - Policy-check consistency across authenticated endpoints in the reviewed scope.
+-  - Password minimum-length enforcement evidence across reviewed password-setting boundaries.
+-  - Security test coverage updates for originally reported authorization concerns.
+- Partially fixed items:
+  - None.
+- Not fixed items:
+  - None from the five tracked findings are fully unchanged.
 
-What changed:
-- Detail endpoints now call authorize(view, resource).
-- Term and course policies were added and registered.
-
-Evidence:
-- repo/backend/app/Http/Controllers/Api/CourseController.php:36
-- repo/backend/app/Http/Controllers/Api/TermController.php:36
-- repo/backend/app/Http/Controllers/Api/SectionController.php:35
-- repo/backend/app/Policies/CoursePolicy.php:20
-- repo/backend/app/Policies/TermPolicy.php:20
-- repo/backend/app/Providers/AppServiceProvider.php:184
-- repo/backend/app/Providers/AppServiceProvider.php:185
-
-Additional static coverage added:
-- repo/backend/api_tests/Domain/Courses/ReadTest.php:47
-- repo/backend/api_tests/Domain/Terms/ReadTest.php:54
-- repo/backend/api_tests/Domain/Sections/ReadTest.php:32
-
----
-
-### 5.3 Scoped authorization weakened by broad role fallbacks
-Status: Partially Fixed
-
-What changed:
-- Major scoped checks were tightened for enrollment updates, section view/roster, and roster import create/view logic.
-
-Evidence of fixes:
-- repo/backend/app/Policies/EnrollmentPolicy.php:18
-- repo/backend/app/Policies/SectionPolicy.php:20
-- repo/backend/app/Policies/RosterImportPolicy.php:41
-
-Residual gap:
-- RosterImportPolicy still has an unscoped registrar role fallback in isStaff(), which can still broaden access semantics for viewAny/history flows.
-
-Residual evidence:
-- repo/backend/app/Policies/RosterImportPolicy.php:64
-
----
-
-### 5.4 Scheduled backup command statically broken
-Status: Fixed
-
-What changed:
-- Scheduled command now creates a BackupJob and passes job id into BackupMetadataJob::dispatchSync.
-- Constructor contract and dispatch now align.
-
-Evidence:
-- repo/backend/app/Console/Commands/BackupsRecordMetadataCommand.php:14
-- repo/backend/app/Console/Commands/BackupsRecordMetadataCommand.php:31
-- repo/backend/app/Jobs/BackupMetadataJob.php:23
-
-Additional static coverage added:
-- repo/backend/api_tests/BackupScheduledCommandTest.php:24
-
----
-
-### 5.5 Payment method contract mismatch (request validation vs schema/enum)
-Status: Fixed
-
-What changed:
-- InitiatePaymentRequest now derives allowed values directly from PaymentMethod enum cases.
-- Validation now matches enum and schema values.
-
-Evidence:
-- repo/backend/app/Http/Requests/InitiatePaymentRequest.php:18
-- repo/backend/app/Enums/PaymentMethod.php:5
-- repo/backend/database/migrations/2026_04_18_005400_create_payment_attempts_table.php:13
-
----
-
-### 5.6 Restore runbook references nonexistent decrypt command and retention overstatement
-Status: Fixed
-
-What changed:
-- Backup decrypt command now exists.
-- Encryption helper now supports decryptFile.
-- Backup pruning logic now deletes files and nulls file_path, aligning with runbook claim.
-
-Evidence:
-- repo/backend/app/Console/Commands/BackupDecryptCommand.php:12
-- repo/backend/app/Console/Commands/BackupDecryptCommand.php:39
-- repo/backend/app/Services/EncryptionHelper.php:100
-- repo/backend/app/Jobs/BackupMetadataJob.php:67
-- docs/restore-runbook.md:109
-
-Additional static coverage added:
-- repo/backend/api_tests/BackupScheduledCommandTest.php:58
-
----
-
-### 5.7 Requirement/endpoint traceability docs drift from implemented routes
-Status: Partially Fixed
-
-What changed:
-- Some previously incorrect mappings were corrected (for example, thread route wording now points to /api/v1/threads).
-
-Evidence of correction:
-- docs/requirement-traceability.md:12
-
-Residual drift still present:
-- R-21 still documents roster/import path while routes use roster-imports.
-- R-25 still documents payment methods as cash/card/bank_transfer while enum is cash/check/local_terminal/waiver.
-
-Residual evidence:
-- docs/requirement-traceability.md:31
-- docs/requirement-traceability.md:35
-- repo/backend/routes/api.php:100
-- repo/backend/app/Enums/PaymentMethod.php:7
-
----
-
-### 5.8 Static test corpus overstated critical authz coverage
-Status: Fixed
-
-What changed:
-- New negative authz tests now exist for cross-scope thread/post/comment writes and term/course/section detail access.
-
-Evidence:
-- repo/backend/api_tests/Domain/Threads/CrossScopeWriteTest.php:43
-- repo/backend/api_tests/Domain/Threads/CreateThreadTest.php:39
-- repo/backend/api_tests/Domain/GradeItems/CrudAndPublishTest.php:79
-- repo/backend/api_tests/Domain/Courses/ReadTest.php:47
-- repo/backend/api_tests/Domain/Terms/ReadTest.php:54
-- repo/backend/api_tests/Domain/Sections/ReadTest.php:32
-
-Note:
-- Static verification confirms coverage additions exist; runtime pass/fail still requires manual test execution.
-
-## Final Conclusion
-Most material blockers/high issues from the prior inspection are now fixed in static code. Remaining follow-up is focused on documentation drift and one residual unscoped registrar fallback path in roster import staff checks.
+5. Recommended Minimal Follow-ups
+- None required for Audit Report 2 tracked items in this fix-check version.
