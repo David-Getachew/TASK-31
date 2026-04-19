@@ -79,10 +79,7 @@ final class RosterImportService
         if ($this->scopeService->canPerform($userId, RoleName::Administrator, ScopeContext::global())) {
             return true;
         }
-        if ($this->scopeService->canPerform($userId, RoleName::Registrar, ScopeContext::term($termId))) {
-            return true;
-        }
-        return $this->scopeService->hasRole($userId, RoleName::Registrar);
+        return $this->scopeService->canPerform($userId, RoleName::Registrar, ScopeContext::term($termId));
     }
 
     /**

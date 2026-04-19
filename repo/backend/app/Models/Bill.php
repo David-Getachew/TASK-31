@@ -67,6 +67,7 @@ class Bill extends Model
     public function scopePastDue(Builder $query): Builder
     {
         return $query->whereIn('status', [BillStatus::Open, BillStatus::Partial, BillStatus::PastDue])
-            ->whereNotNull('due_on');
+            ->whereNotNull('due_on')
+            ->whereDate('due_on', '<', now()->toDateString());
     }
 }

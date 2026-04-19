@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { CacheStore } from '@/offline/cache'
 import { PendingQueue } from '@/offline/queue'
+import http from '@/adapters/http'
 
 export interface PendingAction {
   id: string
@@ -48,6 +49,39 @@ export const useOfflineStore = defineStore('offline', () => {
     retryBanner.value = stored.length > 0
   }
 
+  async function replayQueue(): Promise<{ replayed: number; failed: number }> {
+    let replayed = 0
+    let failed = 0
+    const snapshot = [...pendingActions.value]
+    for (const action of snapshot) {
+      try {
+        await http.request({
+          url: action.endpoint,
+          method: action.method as any,
+          data: action.payload,
+          headers: { 'Idempotency-Key': action.idempotencyKey },
+        })
+        await removeAction(action.id)
+        replayed++
+      } catch (err: any) {
+        failed++
+        await queue.update(action.id, {
+          retries: action.retries + 1,
+          lastAttempt: Date.now(),
+          error: err?.message ?? 'replay_failed',
+        })
+        const updated = pendingActions.value.find((a) => a.id === action.id)
+        if (updated) {
+          updated.retries = action.retries + 1
+          updated.lastAttempt = Date.now()
+          updated.error = err?.message ?? 'replay_failed'
+        }
+      }
+    }
+    if (pendingActions.value.length === 0) retryBanner.value = false
+    return { replayed, failed }
+  }
+
   async function cacheRead<T>(key: string, data: T) {
     await cache.set(key, data)
   }
@@ -58,7 +92,7 @@ export const useOfflineStore = defineStore('offline', () => {
 
   return {
     isReadOnly, pendingActions, retryBanner, pendingCount,
-    setReadOnly, enqueueAction, removeAction, loadQueue,
+    setReadOnly, enqueueAction, removeAction, loadQueue, replayQueue,
     cacheRead, getCached,
   }
 })

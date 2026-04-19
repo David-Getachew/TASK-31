@@ -63,3 +63,38 @@ test('penalty does not apply within grace period', function () {
         'type'    => 'penalty',
     ]);
 });
+
+test('penalty does not apply to bill with future due date', function () {
+    $user = User::factory()->create(['status' => AccountStatus::Active]);
+    $bill = Bill::factory()->for($user)->create([
+        'status'         => BillStatus::Open,
+        'total_cents'    => 10000,
+        'paid_cents'     => 0,
+        'refunded_cents' => 0,
+        'due_on'         => now()->addDays(20)->toDateString(),
+    ]);
+
+    Artisan::call('campuslearn:billing:penalty');
+
+    $this->assertDatabaseMissing('bills', [
+        'user_id' => $user->id,
+        'type'    => 'penalty',
+    ]);
+    expect(\App\Models\PenaltyJob::where('bill_id', $bill->id)->count())->toBe(0);
+});
+
+test('pastDue scope excludes bills with future due dates', function () {
+    $user = User::factory()->create(['status' => AccountStatus::Active]);
+    Bill::factory()->for($user)->create([
+        'status' => BillStatus::Open,
+        'due_on' => now()->addDays(5)->toDateString(),
+    ]);
+    $overdue = Bill::factory()->for($user)->create([
+        'status' => BillStatus::Open,
+        'due_on' => now()->subDays(15)->toDateString(),
+    ]);
+
+    $results = Bill::pastDue()->pluck('id')->all();
+    expect($results)->toContain($overdue->id);
+    expect(count($results))->toBe(1);
+});

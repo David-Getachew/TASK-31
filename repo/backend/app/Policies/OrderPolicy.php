@@ -50,7 +50,6 @@ final class OrderPolicy
     private function isStaff(int $userId): bool
     {
         return $this->scopeService->canPerform($userId, RoleName::Administrator, ScopeContext::global())
-            || $this->scopeService->canPerform($userId, RoleName::Registrar, ScopeContext::global())
-            || $this->scopeService->hasRole($userId, RoleName::Registrar);
+            || $this->scopeService->canPerform($userId, RoleName::Registrar, ScopeContext::global());
     }
 }

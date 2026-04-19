@@ -71,14 +71,18 @@ Route::prefix('v1')->group(function () {
             ->name('health.metrics');
     });
 
-    // ── Contract test harness ──────────────────────────────────────────────
+    // ── Contract test harness (non-production only) ────────────────────────
     // Exercises IdempotencyMiddleware + envelope renderer without domain logic.
-    Route::post('/_contract/echo', function (Request $request) {
-        return ApiEnvelope::data([
-            'echoed'      => $request->all(),
-            'received_at' => now()->toIso8601String(),
-        ]);
-    })->middleware('idempotent')->name('contract.echo');
+    // Gated: disabled in production, and requires an authenticated caller elsewhere
+    // so it cannot be hit anonymously on any deployed environment.
+    if (! app()->environment('production')) {
+        Route::post('/_contract/echo', function (Request $request) {
+            return ApiEnvelope::data([
+                'echoed'      => $request->all(),
+                'received_at' => now()->toIso8601String(),
+            ]);
+        })->middleware(['auth:sanctum', 'idempotent'])->name('contract.echo');
+    }
 
     // ── Domain routes (Prompt 4) ───────────────────────────────────────────
     Route::middleware(['auth:sanctum', 'read-only'])->group(function () {

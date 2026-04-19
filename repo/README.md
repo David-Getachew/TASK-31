@@ -160,7 +160,7 @@ Every key in `config/campuslearn.php` is overrideable via environment variables.
 | `receipts.number_prefix` | `CL_RECEIPT_NUMBER_PREFIX` |
 | `idempotency.ttl_hours` | `CL_IDEMPOTENCY_TTL_HOURS` |
 | `backups.retention_days` | `CL_BACKUP_RETENTION_DAYS` |
-| `backups.source_path` | `CL_BACKUP_SOURCE_PATH` |
+| `backups.source_path` | `CL_BACKUP_SOURCE_PATH` (optional staging override; leave unset to have the pipeline generate a fresh DB export via `DatabaseExportService`) |
 | `backups.target_dir` | `CL_BACKUP_TARGET_DIR` |
 | `auth.password_min_length` | `CL_PASSWORD_MIN_LENGTH` |
 | `auth.login_lock_threshold` | `CL_LOGIN_LOCK_THRESHOLD` |

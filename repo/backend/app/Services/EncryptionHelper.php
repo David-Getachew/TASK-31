@@ -94,6 +94,22 @@ final class EncryptionHelper
         return hash('sha256', $encrypted);
     }
 
+    /**
+     * Decrypts a file produced by `encryptFile()` back to plaintext.
+     */
+    public function decryptFile(string $encryptedPath, string $destPath, string $hexKey): void
+    {
+        $encoded = file_get_contents($encryptedPath);
+        if ($encoded === false) {
+            throw new RuntimeException("Cannot read encrypted file: {$encryptedPath}");
+        }
+
+        $plaintext = $this->decrypt($encoded, $hexKey);
+        if (file_put_contents($destPath, $plaintext) === false) {
+            throw new RuntimeException("Cannot write decrypted file: {$destPath}");
+        }
+    }
+
     private function parseKey(string $hexKey): string
     {
         if (strlen($hexKey) !== 64 || ! ctype_xdigit($hexKey)) {

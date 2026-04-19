@@ -49,21 +49,28 @@ final class DiagnosticExportService
                 }
 
                 $destPath = $targetDir . '/diag_' . $export->id . '_' . now()->format('Ymd_His') . '.enc';
-                $checksum = $this->encryption->encryptFile($this->writeTemp($payload), $destPath, $hexKey);
-                $size     = (int) filesize($destPath);
+                $tempPath = $this->writeTemp($payload);
+                try {
+                    $checksum = $this->encryption->encryptFile($tempPath, $destPath, $hexKey);
+                    $size     = (int) filesize($destPath);
 
-                $export->update([
-                    'file_path'       => $destPath,
-                    'file_size_bytes' => $size,
-                    'checksum_sha256' => $checksum,
-                    'status'          => DiagnosticExportStatus::Completed,
-                    'completed_at'    => now(),
-                ]);
+                    $export->update([
+                        'file_path'       => $destPath,
+                        'file_size_bytes' => $size,
+                        'checksum_sha256' => $checksum,
+                        'status'          => DiagnosticExportStatus::Completed,
+                        'completed_at'    => now(),
+                    ]);
 
-                $this->audit->record($actor->id, 'diagnostic_export.completed', 'diagnostic_export', $export->id, [
-                    'checksum' => $checksum,
-                    'size'     => $size,
-                ]);
+                    $this->audit->record($actor->id, 'diagnostic_export.completed', 'diagnostic_export', $export->id, [
+                        'checksum' => $checksum,
+                        'size'     => $size,
+                    ]);
+                } finally {
+                    if (is_string($tempPath) && is_file($tempPath)) {
+                        @unlink($tempPath);
+                    }
+                }
             } catch (\Throwable $e) {
                 $export->update(['status' => DiagnosticExportStatus::Failed]);
                 throw $e;

@@ -33,7 +33,10 @@ return [
     'backups' => [
         'retention_days' => (int) env('CL_BACKUP_RETENTION_DAYS', 30),
         'encryption_key' => env('BACKUP_ENCRYPTION_KEY'),
-        'source_path'    => env('CL_BACKUP_SOURCE_PATH', storage_path('app/backup-source')),
+        // Optional staging override: when set to an existing file, that file is used
+        // as the source-of-truth artifact to encrypt. When null or missing, the backup
+        // pipeline generates a fresh DB export via DatabaseExportService before encrypting.
+        'source_path'    => env('CL_BACKUP_SOURCE_PATH'),
         'target_dir'     => env('CL_BACKUP_TARGET_DIR', storage_path('app/backups')),
     ],
 

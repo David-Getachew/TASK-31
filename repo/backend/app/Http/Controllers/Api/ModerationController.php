@@ -114,6 +114,7 @@ final class ModerationController extends Controller
 
     public function hidePost(Request $request, Thread $thread, Post $post): JsonResponse
     {
+        abort_if($post->thread_id !== $thread->id, 404);
         $this->authorize('moderate', $post);
 
         $post = $this->moderationService->apply(
@@ -127,6 +128,7 @@ final class ModerationController extends Controller
 
     public function restorePost(Request $request, Thread $thread, Post $post): JsonResponse
     {
+        abort_if($post->thread_id !== $thread->id, 404);
         $this->authorize('moderate', $post);
 
         $post = $this->moderationService->apply(

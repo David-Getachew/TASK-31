@@ -11,8 +11,9 @@
       <BaseField id="payment-method" label="Payment Method" required>
         <select id="payment-method" v-model="method" class="field__input" :disabled="store.submitting">
           <option value="cash">Cash</option>
-          <option value="card">Card</option>
-          <option value="bank_transfer">Bank Transfer</option>
+          <option value="check">Check</option>
+          <option value="local_terminal">Local Terminal</option>
+          <option value="waiver">Waiver</option>
         </select>
       </BaseField>
 

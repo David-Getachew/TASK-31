@@ -31,4 +31,14 @@ onCircuitOpen(() => {
 
 // Rehydrate pending offline queue on mount
 offline.loadQueue()
+
+// When browser reports online again, flip read-only off and replay queued writes
+window.addEventListener('online', async () => {
+  if (offline.isReadOnly) offline.setReadOnly(false)
+  await offline.replayQueue()
+})
+
+window.addEventListener('offline', () => {
+  offline.setReadOnly(true)
+})
 </script>

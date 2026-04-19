@@ -4,6 +4,24 @@ Maps every authored test to the requirement it covers, the endpoint under test, 
 
 **Status values:** `authored` | `passing` | `failing` | `skipped`
 
+> **Note on `authored` status:** this column reflects *static presence* of a test
+> case that is wired to its requirement — it is **not** a verified execution
+> outcome. Promoting a row to `passing` requires running the suite against the
+> current code and capturing the result. Rows still labeled `authored` must
+> therefore not be interpreted as a guarantee of runtime correctness.
+>
+> **High-risk scenarios to re-run and promote explicitly after each change:**
+> - Past-due/penalty logic — must include a future-due negative case (`Domain/Billing/PenaltyTest.php`).
+> - Admin-only health metrics — must include non-admin 403 assertion (`HealthTest.php`).
+> - Nested moderation/report route integrity (`Domain/Moderation/NestedIntegrityTest.php`).
+> - Cross-scope staff denial across orders/bills/appointments/report queue (`Authorization/ScopeBypassPolicyTest.php`).
+> - Scoped registrar roster import (cross-term denial + assigned-term allow) (`Domain/Roster/ImportTest.php`).
+> - Backup DB-export generation and encryption round-trip (`BackupScheduledCommandTest.php`).
+> - Circuit-breaker alert emission on mode transitions (`unit_tests/Jobs/AlertThresholdEvaluationJobTest.php`).
+> - Contract echo endpoint auth gate (`Contract/IdempotencyContractTest.php`, `Contract/MalformedRequestTest.php`).
+> - Validation error code contract (`VALIDATION_FAILED`, not `UNPROCESSABLE_ENTITY`) in `Contract/ErrorEnvelopeTest.php`.
+> - Moderation report adapter call signature (`unit_tests/adapters/moderation.test.ts`).
+
 ---
 
 ## Backend Unit Tests (`repo/backend/unit_tests/`)
@@ -100,6 +118,11 @@ Maps every authored test to the requirement it covers, the endpoint under test, 
 | `Domain/Sections/ReadTest.php` | GET /sections/{id} returns section; GET /sections/{id}/roster returns roster | R-19, R-21 | authored |
 | `Domain/Mentions/IndexTest.php` | GET /mentions returns current user's mentions; unauthenticated returns 401 | R-06 | authored |
 | `Domain/Threads/BindingIntegrityTest.php` | GET/PATCH/DELETE post with mismatched thread returns 404; PATCH/DELETE comment with mismatched post returns 404 | R-03, R-04 | authored |
+| `Domain/Threads/CrossScopeWriteTest.php` | student not enrolled in thread's section cannot create post; enrolled student can post; unrelated student cannot comment on a post; non-enrolled student cannot index thread posts | R-02, R-03, R-18, R-20 | authored |
+| `Domain/Threads/UpdateAuthorizationTest.php` | teacher scoped to different course cannot update thread; unrelated student cannot update someone else's thread; teacher in same course can moderate thread update | R-02, R-18, R-20 | authored |
+| `Domain/Courses/ReadTest.php` | admin sees any course; enrolled student sees their course; unrelated student returns 403; teacher on course A cannot view course B; unauthenticated returns 401 | R-19, R-20 | authored |
+| `Domain/Payment/InitiatePaymentMethodTest.php` | POST /orders/{id}/payment accepts each PaymentMethod enum value; rejects bank_transfer/card with 422 | R-22, R-23 | authored |
+| `BackupScheduledCommandTest.php` | scheduled backup command creates BackupJob and transitions to Completed; prunes expired backups and deletes files; decrypt command round-trips the backup file | R-47 | authored |
 
 ---
 

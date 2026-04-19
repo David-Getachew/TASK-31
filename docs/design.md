@@ -159,7 +159,7 @@ All payments are completed at a **staffed office** or **kiosk** terminal inside 
 3. Receipt is printable from the UI.
 
 ### Auto-Close
-A scheduler job runs every minute to close `pending_payment` orders that have been open for **30 minutes** without completion.
+A scheduler job runs every 5 minutes to close `pending_payment` orders that have been open for **30 minutes** without completion.
 
 ---
 
@@ -197,7 +197,7 @@ On-demand encrypted export of diagnostic log data to a local file. Encryption ke
 The `database` queue driver is used for notification fan-out, billing job dispatch, and backup jobs. Jobs have `tries = 3` and exponential retry delays.
 
 ### Backups
-- Laravel scheduler runs a nightly encrypted backup job at 01:00 AM.
+- Laravel scheduler runs a nightly encrypted backup job at 04:00 AM.
 - Backups are AES-encrypted using `BACKUP_ENCRYPTION_KEY` from environment.
 - Retained for **30 days**; older backups are pruned automatically.
 - Backup metadata (filename, size, SHA-256 checksum, created_at) stored in MySQL.
@@ -344,7 +344,7 @@ Laravel Policies registered in `AppServiceProvider::boot`:
 ### 14.4 Request Metrics and Circuit Breaker
 
 1. `RecordRequestMetricsMiddleware` (global, appended after `CorrelationIdMiddleware`) writes one `request_metrics` row per request after the response: route name, method, status, duration_ms, user_id, correlation_id.
-2. `CircuitBreakerService::evaluate()` queries the last N seconds of `request_metrics`, builds an `ErrorRateWindow`, and passes it to `CircuitBreakerPolicy::evaluate()`. On mode change it updates `circuit_breaker_state` (singleton row id=1) and logs.
+2. `CircuitBreakerService::evaluate()` queries the last N seconds of `request_metrics`, builds an `ErrorRateWindow`, and passes it to `CircuitBreakerPolicy::evaluate()`. On mode change it updates `circuit_breaker_state` (singleton row id=1), emits a structured log line, and writes a durable `SystemAlert` row (`kind=circuit.tripped` severity `critical` on trip; `kind=circuit.restored` severity `info` on recovery) with a JSON context snapshot of `error_rate_bps`, `total_requests`, and `window_seconds`. No duplicate alert is emitted while the mode is stable.
 3. `EnforceReadOnlyModeMiddleware` (alias `read-only`) rejects non-safe HTTP verbs with 503 when `circuit_breaker_state.mode = read_only`.
 4. `GET /api/v1/health/circuit` (auth required) returns the live circuit snapshot including `error_rate_bps`, `tripped_at`, and mode. `GET /api/v1/health/metrics` returns aggregated error rate, request count, and latency percentiles (p50/p95/p99).
 
@@ -581,7 +581,7 @@ Exponential Backoff (src/offline/backoff.ts)
 ### 18.2 Backup Management Flow
 
 1. `BackupMetadataJob` runs nightly at 04:00 via the scheduler (registered in `routes/console.php`).
-2. The job creates a `backup_jobs` row (`status = running`), encrypts the configured `campuslearn.backups.source_path` to `campuslearn.backups.target_dir`, records the SHA-256 checksum, file size, and `retention_expires_on = today + retention_days`. On success: `status = completed`. On failure: `status = failed`.
+2. The job creates a `backup_jobs` row (`status = running`), then generates a fresh, deterministic DB export via `DatabaseExportService` (driver-agnostic: iterates tables via the active connection and emits INSERT statements under a fixed `-- CampusLearn SQL Export v1` header). The artifact is validated (non-empty + header magic) before being encrypted to `campuslearn.backups.target_dir`. The encrypted file's SHA-256 checksum, size, and `retention_expires_on = today + retention_days` are recorded. On success: `status = completed`. On failure: `status = failed`. The intermediate SQL dump file is always deleted in a `finally` block. If `campuslearn.backups.source_path` is explicitly set to an existing file, that path is used as the source artifact instead (staging/test override only).
 3. Admin can trigger an ad-hoc backup via `POST /api/v1/admin/backups/trigger` (idempotent). `BackupController::trigger()` dispatches `BackupMetadataJob` to the queue and returns `202 Accepted`. An audit log entry is written.
 4. `GET /api/v1/admin/backups` returns all backup records including `pruned` entries (retained for audit trail).
 5. `GET /api/v1/admin/backups/{id}` returns a single record.

@@ -83,7 +83,7 @@ async function handleSubmit() {
         'Your account has been temporarily locked due to too many failed attempts. Please try again later.'
     } else if (code === 'INVALID_CREDENTIALS') {
       errorMessage.value = 'Email or password is incorrect.'
-    } else if (code === 'VALIDATION_FAILED' || code === 'UNPROCESSABLE_ENTITY') {
+    } else if (code === 'VALIDATION_FAILED') {
       errorMessage.value = 'Please enter a valid email and password.'
     } else {
       errorMessage.value = 'An unexpected error occurred. Please try again.'

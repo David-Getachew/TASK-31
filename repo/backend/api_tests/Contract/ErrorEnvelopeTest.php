@@ -27,3 +27,11 @@ test('unauthenticated /api/v1/health/circuit returns UNAUTHENTICATED envelope', 
     $response->assertStatus(401)
         ->assertJsonPath('error.code', 'UNAUTHENTICATED');
 });
+
+test('validation errors return VALIDATION_FAILED envelope aligned with docs/api-spec.md', function () {
+    // POST /auth/login with empty payload triggers LoginRequest validation (email+password required).
+    $response = $this->postJson('/api/v1/auth/login', []);
+    $response->assertStatus(422)
+        ->assertJsonPath('error.code', 'VALIDATION_FAILED')
+        ->assertJsonStructure(['error' => ['code', 'message', 'details' => ['errors']]]);
+});

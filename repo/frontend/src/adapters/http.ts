@@ -77,11 +77,46 @@ http.interceptors.request.use((config) => {
   return config
 })
 
-// Response: normalize errors, detect circuit-break, handle 401
+// Retry config for transient failures (exponential backoff + jitter).
+const RETRY_MAX_ATTEMPTS = 3
+const RETRY_BASE_DELAY_MS = 500
+const RETRY_SAFE_METHODS = new Set(['get', 'head', 'options'])
+
+function isTransientStatus(status?: number): boolean {
+  return status === 502 || status === 503 || status === 504
+}
+
+function shouldRetry(error: AxiosError): boolean {
+  const cfg = error.config as (typeof error.config & { __retryCount?: number; __noRetry?: boolean }) | undefined
+  if (!cfg || cfg.__noRetry) return false
+  const method = (cfg.method ?? 'get').toLowerCase()
+  const status = error.response?.status
+  const hasIdempotencyKey = Boolean(cfg.headers?.['Idempotency-Key'] || cfg.headers?.['idempotency-key'])
+  const safe = RETRY_SAFE_METHODS.has(method) || hasIdempotencyKey
+  if (!safe) return false
+  // Retry on network / timeout / transient 5xx
+  if (!error.response) return true
+  return isTransientStatus(status)
+}
+
+// Response: normalize errors, detect circuit-break, handle 401, retry transient errors
 http.interceptors.response.use(
   (response) => response,
-  (error: AxiosError<{ error: ApiError }>) => {
+  async (error: AxiosError<{ error: ApiError }>) => {
     const status = error.response?.status
+    const cfg = error.config as (typeof error.config & { __retryCount?: number }) | undefined
+
+    if (cfg && shouldRetry(error)) {
+      cfg.__retryCount = (cfg.__retryCount ?? 0) + 1
+      if (cfg.__retryCount <= RETRY_MAX_ATTEMPTS) {
+        const delay =
+          RETRY_BASE_DELAY_MS *
+          Math.pow(2, cfg.__retryCount - 1) *
+          (0.9 + Math.random() * 0.2)
+        await new Promise((res) => setTimeout(res, delay))
+        return http.request(cfg)
+      }
+    }
 
     // Trigger circuit-break callback on 503
     if (status === 503 && _circuitOpenCallback) {
@@ -102,7 +137,9 @@ http.interceptors.response.use(
 export default http
 
 // ── Exponential-backoff retry helper ─────────────────────────────────────────
-// (standalone; not wired into axios to keep conflict visibility explicit)
+// Exposed for call-site wrappers that need extra control; the default axios
+// instance already retries transient (5xx/network) failures for safe or
+// idempotency-keyed requests via the response interceptor above.
 
 export async function withRetry<T>(
   fn: () => Promise<T>,

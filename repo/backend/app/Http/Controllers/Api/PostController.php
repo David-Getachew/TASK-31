@@ -23,13 +23,16 @@ final class PostController extends Controller
 
     public function index(Thread $thread): JsonResponse
     {
+        $this->authorize('view', $thread);
+
         $posts = $thread->posts()->with('author')->orderBy('created_at')->paginate(50);
         return ApiEnvelope::data($posts);
     }
 
     public function store(CreatePostRequest $request, Thread $thread): JsonResponse
     {
-        $this->authorize('create', Post::class);
+        $this->authorize('view', $thread);
+        $this->authorize('create', [Post::class, $thread]);
 
         $post = $this->contentService->createPost($request->user(), $thread, $request->validated());
         return ApiEnvelope::data($post, 201);
@@ -40,6 +43,8 @@ final class PostController extends Controller
         if ($post->thread_id !== $thread->id) {
             abort(404);
         }
+
+        $this->authorize('view', $thread);
 
         return ApiEnvelope::data($post->load(['author', 'comments.author']));
     }

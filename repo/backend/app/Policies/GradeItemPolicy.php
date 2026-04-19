@@ -20,20 +20,19 @@ final class GradeItemPolicy
 
     public function create(User $user, ?Section $section = null): bool
     {
-        return true;
+        if ($section === null) {
+            return false;
+        }
+        return $this->isTeacherForSection($user->id, $section->id);
     }
 
     public function update(User $user, GradeItem $gradeItem): bool
     {
-        return true;
+        return $this->isTeacherForSection($user->id, $gradeItem->section_id);
     }
 
     public function publish(User $user, GradeItem $gradeItem): bool
     {
-        if (! $user->roleAssignments()->whereNull('revoked_at')->exists()) {
-            return true;
-        }
-
         if ($this->scopeService->canPerform($user->id, RoleName::Administrator, ScopeContext::global())) {
             return true;
         }

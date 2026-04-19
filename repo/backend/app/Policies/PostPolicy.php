@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
+use App\Enums\EnrollmentStatus;
 use App\Enums\RoleName;
+use App\Models\Enrollment;
 use App\Models\Post;
+use App\Models\Thread;
 use App\Models\User;
 use CampusLearn\Auth\ScopeContext;
 use CampusLearn\Auth\ScopeResolutionService;
@@ -19,9 +22,44 @@ final class PostPolicy
     ) {
     }
 
-    public function create(User $user): bool
+    public function create(User $user, ?Thread $thread = null): bool
     {
-        return true;
+        if ($thread === null) {
+            return false;
+        }
+        if ($this->scopeService->canPerform($user->id, RoleName::Administrator, ScopeContext::global())) {
+            return true;
+        }
+        $ancestry = [
+            'course'  => $thread->course_id,
+            'section' => $thread->section_id,
+        ];
+        if ($this->scopeService->canPerform(
+            $user->id,
+            RoleName::Teacher,
+            ScopeContext::course($thread->course_id),
+            $ancestry,
+        )) {
+            return true;
+        }
+        if ($thread->section_id !== null && $this->scopeService->canPerform(
+            $user->id,
+            RoleName::Teacher,
+            ScopeContext::section($thread->section_id),
+            $ancestry,
+        )) {
+            return true;
+        }
+        if ($thread->section_id !== null) {
+            return Enrollment::where('user_id', $user->id)
+                ->where('section_id', $thread->section_id)
+                ->where('status', EnrollmentStatus::Enrolled)
+                ->exists();
+        }
+        return Enrollment::where('user_id', $user->id)
+            ->whereHas('section', fn ($q) => $q->where('course_id', $thread->course_id))
+            ->where('status', EnrollmentStatus::Enrolled)
+            ->exists();
     }
 
     public function update(User $user, Post $post): bool

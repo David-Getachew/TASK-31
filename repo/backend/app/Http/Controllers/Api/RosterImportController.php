@@ -37,7 +37,7 @@ final class RosterImportController extends Controller
 
     public function history(Request $request, Term $term): JsonResponse
     {
-        $this->authorize('viewAny', RosterImport::class);
+        $this->authorize('create', [RosterImport::class, $term->id]);
 
         $imports = RosterImport::where('term_id', $term->id)
             ->orderByDesc('created_at')

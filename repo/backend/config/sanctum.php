@@ -9,7 +9,10 @@ return [
 
     'guard' => ['web'],
 
-    'expiration' => env('SANCTUM_TOKEN_EXPIRY', 60),
+    // NOTE: Token expiration is driven by CL_TOKEN_TTL_MINUTES via
+    // config('campuslearn.auth.token_ttl_minutes') and applied in AuthService.
+    // Leaving Sanctum's global expiration null avoids double-enforcement.
+    'expiration' => null,
 
     'token_prefix' => env('SANCTUM_TOKEN_PREFIX', ''),
 

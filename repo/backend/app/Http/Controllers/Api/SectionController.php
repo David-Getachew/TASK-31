@@ -32,6 +32,8 @@ final class SectionController extends Controller
 
     public function show(Section $section): JsonResponse
     {
+        $this->authorize('view', $section);
+
         return ApiEnvelope::data($section->load('course'));
     }
 

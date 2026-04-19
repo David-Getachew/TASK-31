@@ -19,7 +19,9 @@ final class AppointmentPolicy
 
     public function viewAny(User $user): bool
     {
-        return true;
+        // Students list their own appointments; staff may list all.
+        // (Service layer scopes results per role.)
+        return $this->isStaff($user->id) || $this->scopeService->hasRole($user->id, RoleName::Student);
     }
 
     public function view(User $user, Appointment $appointment): bool
@@ -31,7 +33,8 @@ final class AppointmentPolicy
 
     public function create(User $user): bool
     {
-        return true;
+        // Per API spec §7.20: appointment creation is a staff/admin action.
+        return $this->isStaff($user->id);
     }
 
     public function update(User $user, Appointment $appointment): bool
@@ -47,6 +50,6 @@ final class AppointmentPolicy
     private function isStaff(int $userId): bool
     {
         return $this->scopeService->canPerform($userId, RoleName::Administrator, ScopeContext::global())
-            || $this->scopeService->hasRole($userId, RoleName::Registrar);
+            || $this->scopeService->canPerform($userId, RoleName::Registrar, ScopeContext::global());
     }
 }

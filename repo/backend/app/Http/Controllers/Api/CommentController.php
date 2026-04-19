@@ -23,7 +23,7 @@ final class CommentController extends Controller
 
     public function store(CreateCommentRequest $request, Post $post): JsonResponse
     {
-        $this->authorize('create', Comment::class);
+        $this->authorize('create', [Comment::class, $post]);
 
         $comment = $this->contentService->createComment($request->user(), $post, $request->validated());
         return ApiEnvelope::data($comment, 201);

@@ -35,6 +35,32 @@ test('staff can create a refund request', function () {
         ->assertJsonPath('data.status', RefundStatus::Pending->value);
 });
 
+test('term-scoped registrar cannot create a refund request', function () {
+    $term     = \App\Models\Term::factory()->create();
+    $scoped   = User::factory()->create(['status' => AccountStatus::Active]);
+    \App\Models\UserRole::create([
+        'user_id'    => $scoped->id,
+        'role'       => \App\Enums\RoleName::Registrar,
+        'scope_type' => 'term',
+        'scope_id'   => $term->id,
+    ]);
+
+    $student = User::factory()->create(['status' => AccountStatus::Active]);
+    $bill    = Bill::factory()->for($student)->create([
+        'total_cents'    => 10000,
+        'paid_cents'     => 10000,
+        'refunded_cents' => 0,
+        'status'         => BillStatus::Paid,
+    ]);
+    RefundReasonCode::firstOrCreate(['code' => 'scope_bad'], ['label' => 'Scoped deny']);
+
+    $this->actingAs($scoped)->postJson("/api/v1/bills/{$bill->id}/refunds", [
+        'amount_cents' => 5000,
+        'reason_code'  => 'scope_bad',
+    ], ['Idempotency-Key' => 'scoped-refund-' . uniqid()])
+        ->assertStatus(403);
+});
+
 test('non-operator cannot create refund request', function () {
     $student = User::factory()->create(['status' => AccountStatus::Active]);
     $bill    = Bill::factory()->for($student)->create([

@@ -154,8 +154,18 @@ final class BillingService
             }
 
             $graceDays   = config('campuslearn.billing.penalty_grace_days', 10);
-            $daysPastDue = $bill->due_on ? (int) $bill->due_on->diffInDays(now(), true) : 0;
-
+            if (!$bill->due_on) {
+                return null;
+            }
+            $today = now()->startOfDay();
+            $dueDate = $bill->due_on->copy()->startOfDay();
+            if ($dueDate->greaterThanOrEqualTo($today)) {
+                return null;
+            }
+            $daysPastDue = (int) $dueDate->diffInDays($today, false);
+            if ($daysPastDue < 0) {
+                $daysPastDue = 0;
+            }
             if ($daysPastDue < $graceDays) {
                 return null;
             }

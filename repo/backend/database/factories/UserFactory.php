@@ -111,4 +111,40 @@ class UserFactory extends Factory
             ]);
         });
     }
+
+    public function asScopedRegistrar(string $scopeType = 'term', int $scopeId = 1): static
+    {
+        return $this->afterCreating(function (User $user) use ($scopeType, $scopeId): void {
+            $role = Role::query()->firstOrCreate(
+                ['name' => RoleName::Registrar->value],
+                ['label' => 'Registrar'],
+            );
+
+            RoleAssignment::query()->create([
+                'user_id'    => $user->id,
+                'role_id'    => $role->id,
+                'scope_type' => $scopeType,
+                'scope_id'   => $scopeId,
+                'granted_at' => now(),
+            ]);
+        });
+    }
+
+    public function asScopedTeacher(string $scopeType = 'section', int $scopeId = 1): static
+    {
+        return $this->afterCreating(function (User $user) use ($scopeType, $scopeId): void {
+            $role = Role::query()->firstOrCreate(
+                ['name' => RoleName::Teacher->value],
+                ['label' => 'Teacher'],
+            );
+
+            RoleAssignment::query()->create([
+                'user_id'    => $user->id,
+                'role_id'    => $role->id,
+                'scope_type' => $scopeType,
+                'scope_id'   => $scopeId,
+                'granted_at' => now(),
+            ]);
+        });
+    }
 }

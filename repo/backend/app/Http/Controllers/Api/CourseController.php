@@ -33,6 +33,8 @@ final class CourseController extends Controller
 
     public function show(Course $course): JsonResponse
     {
+        $this->authorize('view', $course);
+
         return ApiEnvelope::data($course->load('term'));
     }
 

@@ -35,7 +35,7 @@ final class ApiExceptionRenderer
 
         return match (true) {
             $e instanceof ValidationException => ApiEnvelope::error(
-                'UNPROCESSABLE_ENTITY',
+                'VALIDATION_FAILED',
                 'Validation failed.',
                 422,
                 ['errors' => $e->errors()],
@@ -137,7 +137,7 @@ final class ApiExceptionRenderer
             404 => 'NOT_FOUND',
             405 => 'METHOD_NOT_ALLOWED',
             409 => 'CONFLICT',
-            422 => 'UNPROCESSABLE_ENTITY',
+            422 => 'VALIDATION_FAILED',
             423 => 'LOCKED',
             429 => 'RATE_LIMITED',
             503 => 'SERVICE_UNAVAILABLE',

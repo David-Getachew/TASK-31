@@ -2,7 +2,7 @@
 
 export type GradeItemState = 'draft' | 'published'
 export type OrderStatus = 'pending_payment' | 'paid' | 'canceled' | 'refunded' | 'redeemed'
-export type PaymentMethod = 'cash' | 'card' | 'bank_transfer'
+export type PaymentMethod = 'cash' | 'check' | 'local_terminal' | 'waiver'
 export type PaymentStatus = 'pending' | 'succeeded' | 'failed'
 export type BillStatus = 'open' | 'partial' | 'paid' | 'void' | 'past_due'
 export type BillType = 'initial' | 'recurring' | 'supplemental' | 'penalty'

@@ -17,14 +17,42 @@ final class RosterImportPolicy
     ) {
     }
 
-    public function viewAny(User $user): bool
+    public function viewAny(User $user, ?int $termId = null): bool
     {
-        return $this->isStaff($user->id);
+        if ($this->scopeService->canPerform($user->id, RoleName::Administrator, ScopeContext::global())) {
+            return true;
+        }
+        if ($this->scopeService->canPerform($user->id, RoleName::Registrar, ScopeContext::global())) {
+            return true;
+        }
+        if ($termId !== null) {
+            return $this->scopeService->canPerform(
+                $user->id,
+                RoleName::Registrar,
+                ScopeContext::term($termId),
+                ['term' => $termId],
+            );
+        }
+        return false;
     }
 
     public function view(User $user, RosterImport $import): bool
     {
-        return $this->isStaff($user->id) || $import->initiated_by === $user->id;
+        if ($this->scopeService->canPerform($user->id, RoleName::Administrator, ScopeContext::global())) {
+            return true;
+        }
+        if ($this->scopeService->canPerform($user->id, RoleName::Registrar, ScopeContext::global())) {
+            return true;
+        }
+        if ($this->scopeService->canPerform(
+            $user->id,
+            RoleName::Registrar,
+            ScopeContext::term($import->term_id),
+            ['term' => $import->term_id],
+        )) {
+            return true;
+        }
+        return $import->initiated_by === $user->id;
     }
 
     public function create(User $user, int $termId): bool
@@ -32,13 +60,15 @@ final class RosterImportPolicy
         if ($this->scopeService->canPerform($user->id, RoleName::Administrator, ScopeContext::global())) {
             return true;
         }
-        return $this->scopeService->canPerform($user->id, RoleName::Registrar, ScopeContext::term($termId))
-            || $this->scopeService->hasRole($user->id, RoleName::Registrar);
+        if ($this->scopeService->canPerform($user->id, RoleName::Registrar, ScopeContext::global())) {
+            return true;
+        }
+        return $this->scopeService->canPerform(
+            $user->id,
+            RoleName::Registrar,
+            ScopeContext::term($termId),
+            ['term' => $termId],
+        );
     }
 
-    private function isStaff(int $userId): bool
-    {
-        return $this->scopeService->canPerform($userId, RoleName::Administrator, ScopeContext::global())
-            || $this->scopeService->hasRole($userId, RoleName::Registrar);
-    }
 }

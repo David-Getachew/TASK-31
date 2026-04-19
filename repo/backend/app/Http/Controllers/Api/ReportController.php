@@ -36,6 +36,7 @@ final class ReportController extends Controller
 
     public function storeForComment(CreateReportRequest $request, Post $post, Comment $comment): JsonResponse
     {
+        abort_if($comment->post_id !== $post->id, 404);
         $this->authorize('create', Report::class);
 
         $report = $this->reportService->submit(

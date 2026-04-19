@@ -142,7 +142,7 @@ async function restorePost() {
 
 async function submitReport() {
   if (!reportReason.value.trim()) return
-  await moderationAdapter.reportPost(props.threadId, props.post.id, reportReason.value)
+  await moderationAdapter.reportPost(props.post.id, reportReason.value)
   showReport.value   = false
   reportReason.value = ''
   emit('reported')

@@ -59,17 +59,35 @@ test.describe('Discussion flow', () => {
   })
 
   test('sensitive-word rejection blocks submit and highlights blocked terms', async ({ page }) => {
+    // Intercept the sensitive-words check to deterministically return a blocked result,
+    // so the assertion no longer depends on server-configured word lists.
+    await page.route('**/api/v1/sensitive-words/check', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          data: {
+            blocked: true,
+            blocked_terms: [{ term: 'badword', start: 0, end: 7 }],
+          },
+        }),
+      }),
+    )
+
     await page.goto(`${BASE}/sections/1/threads`)
     await openCreateThreadModal(page)
     await page.getByLabel('Title').fill('Test Thread')
-    // Type a body that triggers the sensitive-word check
-    await page.getByLabel('Body').fill('This contains a blocked_demo_word that the server rejects')
-    // Wait for debounce + API response (mock or real)
+    await page.getByLabel('Body').fill('badword here in body text')
+    // Wait for debounce + mocked API response
     await page.waitForTimeout(800)
-    // If blocked: Post Thread button should be disabled
+
+    // 1) Blocked-terms alert must be visible, listing the term
+    const alert = page.locator('[role="alert"], .blocked-terms-alert, .error-message').first()
+    await expect(alert).toContainText(/badword/i)
+
+    // 2) Submit button must be disabled while blocked terms persist
     const submitBtn = page.locator('button:has-text("Post Thread")')
-    // In a real environment with a known blocked word, check disabled; here just verify button exists
-    await expect(submitBtn).toBeVisible()
+    await expect(submitBtn).toBeDisabled()
   })
 
   test('edit window countdown visible on fresh post', async ({ page }) => {

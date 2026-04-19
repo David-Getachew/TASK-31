@@ -7,6 +7,7 @@ namespace App\Services;
 use App\Enums\CircuitBreakerMode;
 use App\Models\CircuitBreakerState;
 use App\Models\RequestMetric;
+use App\Models\SystemAlert;
 use CampusLearn\Observability\CircuitBreakerPolicy;
 use CampusLearn\Observability\ErrorRateWindow;
 use Illuminate\Support\Facades\Log;
@@ -35,6 +36,7 @@ class CircuitBreakerService
         $newMode = $this->policy->evaluate($state->mode, $window);
 
         if ($newMode !== $state->mode) {
+            $previousMode = $state->getOriginal('mode')?->value ?? $state->mode->value;
             $state->mode         = $newMode;
             $state->tripped_at   = $newMode === CircuitBreakerMode::ReadOnly ? now() : null;
             $state->tripped_reason = $newMode === CircuitBreakerMode::ReadOnly
@@ -44,12 +46,39 @@ class CircuitBreakerService
             $state->save();
 
             Log::warning('Circuit breaker mode changed', [
-                'from' => $state->getOriginal('mode')?->value ?? 'unknown',
+                'from' => $previousMode,
                 'to'   => $newMode->value,
             ]);
+
+            $this->emitAlert($previousMode, $newMode, $window);
         }
 
         return $newMode;
+    }
+
+    /**
+     * Persist a durable alert whenever the breaker transitions so ops tooling
+     * has an audit-trail record in addition to ephemeral log output.
+     */
+    private function emitAlert(string $previousMode, CircuitBreakerMode $newMode, ErrorRateWindow $window): void
+    {
+        $tripped = $newMode === CircuitBreakerMode::ReadOnly;
+        SystemAlert::create([
+            'kind'     => $tripped ? 'circuit.tripped' : 'circuit.restored',
+            'severity' => $tripped ? 'critical' : 'info',
+            'message'  => $tripped
+                ? 'Circuit breaker tripped to read-only due to elevated error rate.'
+                : 'Circuit breaker restored to read-write.',
+            'context'  => [
+                'from_mode'       => $previousMode,
+                'to_mode'         => $newMode->value,
+                'error_rate_bps'  => $window->errorRateBps(),
+                'total_requests'  => $window->totalRequests,
+                'window_seconds'  => $window->windowSeconds,
+            ],
+            'observed_at' => now(),
+            'resolved_at' => $tripped ? null : now(),
+        ]);
     }
 
     /**

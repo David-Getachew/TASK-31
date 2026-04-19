@@ -7,6 +7,7 @@ use App\Policies\BackupPolicy;
 use App\Policies\BillPolicy;
 use App\Policies\CatalogItemPolicy;
 use App\Policies\CommentPolicy;
+use App\Policies\CoursePolicy;
 use App\Policies\DiagnosticExportPolicy;
 use App\Policies\EnrollmentPolicy;
 use App\Policies\DrDrillPolicy;
@@ -22,6 +23,7 @@ use App\Policies\RosterImportPolicy;
 use App\Policies\SectionPolicy;
 use App\Policies\SensitiveWordRulePolicy;
 use App\Policies\SystemSettingPolicy;
+use App\Policies\TermPolicy;
 use App\Policies\ThreadPolicy;
 use App\Repositories\EloquentIdempotencyKeyStore;
 use App\Services\BillingService;
@@ -179,5 +181,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(\App\Models\DrDrillRecord::class, DrDrillPolicy::class);
         Gate::policy(\App\Models\SystemSetting::class, SystemSettingPolicy::class);
         Gate::policy(\App\Models\Section::class, SectionPolicy::class);
+        Gate::policy(\App\Models\Term::class, TermPolicy::class);
+        Gate::policy(\App\Models\Course::class, CoursePolicy::class);
     }
 }

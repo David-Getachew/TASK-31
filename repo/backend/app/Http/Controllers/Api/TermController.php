@@ -33,6 +33,8 @@ final class TermController extends Controller
 
     public function show(Term $term): JsonResponse
     {
+        $this->authorize('view', $term);
+
         return ApiEnvelope::data($term);
     }
 

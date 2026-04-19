@@ -1,4 +1,5 @@
 import http from './http'
+import { offlineSafeWrite } from './offlineCapture'
 import type { Appointment } from '../types/api'
 import type { ApiResponse, PaginatedResponse } from '../types'
 
@@ -17,7 +18,7 @@ export const appointmentsAdapter = {
     scheduled_end: string
     notes?: string
   }) =>
-    http.post<ApiResponse<Appointment>>('/appointments', data),
+    offlineSafeWrite<ApiResponse<Appointment>>('post', '/appointments', data),
 
   update: (id: number, data: Partial<{
     resource_type: string
@@ -27,8 +28,8 @@ export const appointmentsAdapter = {
     notes: string
     status: string
   }>) =>
-    http.patch<ApiResponse<Appointment>>(`/appointments/${id}`, data),
+    offlineSafeWrite<ApiResponse<Appointment>>('patch', `/appointments/${id}`, data),
 
   cancel: (id: number) =>
-    http.delete(`/appointments/${id}`),
+    offlineSafeWrite('delete', `/appointments/${id}`),
 }

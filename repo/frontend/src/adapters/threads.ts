@@ -1,4 +1,5 @@
 import http from './http'
+import { offlineSafeWrite } from './offlineCapture'
 import type { Thread, Post, Comment } from '../types/api'
 import type { ApiResponse, PaginatedResponse } from '../types'
 
@@ -10,20 +11,20 @@ export const threadsAdapter = {
     http.get<ApiResponse<Thread>>(`/threads/${id}`),
 
   create: (data: { section_id: number; type: string; title: string; body: string }) =>
-    http.post<ApiResponse<Thread>>('/threads', data),
+    offlineSafeWrite<ApiResponse<Thread>>('post', '/threads', data),
 
   update: (id: number, data: { title?: string; body?: string }) =>
-    http.patch<ApiResponse<Thread>>(`/threads/${id}`, data),
+    offlineSafeWrite<ApiResponse<Thread>>('patch', `/threads/${id}`, data),
 
   listPosts: (threadId: number) =>
     http.get<PaginatedResponse<Post>>(`/threads/${threadId}/posts`),
 
   createPost: (threadId: number, data: { body: string }) =>
-    http.post<ApiResponse<Post>>(`/threads/${threadId}/posts`, data),
+    offlineSafeWrite<ApiResponse<Post>>('post', `/threads/${threadId}/posts`, data),
 
   updatePost: (threadId: number, postId: number, data: { body: string }) =>
-    http.patch<ApiResponse<Post>>(`/threads/${threadId}/posts/${postId}`, data),
+    offlineSafeWrite<ApiResponse<Post>>('patch', `/threads/${threadId}/posts/${postId}`, data),
 
   deletePost: (threadId: number, postId: number) =>
-    http.delete(`/threads/${threadId}/posts/${postId}`),
+    offlineSafeWrite('delete', `/threads/${threadId}/posts/${postId}`),
 }

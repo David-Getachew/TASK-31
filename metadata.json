@@ -1,6 +1,5 @@
 {
   "project_type": "full-stack",
-  "classification": "offline LAN web platform",
   "frontend_language": "TypeScript",
   "frontend_framework": "Vue.js",
   "backend_language": "PHP",

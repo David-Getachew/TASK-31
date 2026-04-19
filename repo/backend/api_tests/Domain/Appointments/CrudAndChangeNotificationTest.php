@@ -11,8 +11,8 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 uses(RefreshDatabase::class);
 
 test('staff can create an appointment', function () {
-    $staff  = User::factory()->create(['status' => AccountStatus::Active]);
-    $owner  = User::factory()->create(['status' => AccountStatus::Active]);
+    $staff  = User::factory()->asRegistrar()->create(['status' => AccountStatus::Active]);
+    $owner  = User::factory()->asStudent()->create(['status' => AccountStatus::Active]);
 
     $response = $this->actingAs($staff)->postJson('/api/v1/appointments', [
         'owner_user_id'   => $owner->id,
@@ -33,9 +33,33 @@ test('staff can create an appointment', function () {
     ]);
 });
 
+test('student cannot create an appointment (staff/admin only per API spec §7.20)', function () {
+    $student = User::factory()->asStudent()->create(['status' => AccountStatus::Active]);
+    $owner   = User::factory()->asStudent()->create(['status' => AccountStatus::Active]);
+
+    $this->actingAs($student)->postJson('/api/v1/appointments', [
+        'owner_user_id'   => $owner->id,
+        'resource_type'   => 'facility',
+        'scheduled_start' => now()->addDay()->toDateTimeString(),
+        'scheduled_end'   => now()->addDay()->addHour()->toDateTimeString(),
+    ])->assertStatus(403);
+});
+
+test('scoped (term) registrar cannot create an appointment', function () {
+    $scoped = User::factory()->asScopedRegistrar('term', 1)->create(['status' => AccountStatus::Active]);
+    $owner  = User::factory()->asStudent()->create(['status' => AccountStatus::Active]);
+
+    $this->actingAs($scoped)->postJson('/api/v1/appointments', [
+        'owner_user_id'   => $owner->id,
+        'resource_type'   => 'facility',
+        'scheduled_start' => now()->addDay()->toDateTimeString(),
+        'scheduled_end'   => now()->addDay()->addHour()->toDateTimeString(),
+    ])->assertStatus(403);
+});
+
 test('canceling appointment dispatches notification job', function () {
-    $staff = User::factory()->create(['status' => AccountStatus::Active]);
-    $owner = User::factory()->create(['status' => AccountStatus::Active]);
+    $staff = User::factory()->asRegistrar()->create(['status' => AccountStatus::Active]);
+    $owner = User::factory()->asStudent()->create(['status' => AccountStatus::Active]);
 
     $appointment = Appointment::create([
         'owner_user_id'   => $owner->id,
