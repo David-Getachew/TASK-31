@@ -28,7 +28,7 @@ final class GradeItemController extends Controller
 
     public function store(CreateGradeItemRequest $request, Section $section): JsonResponse
     {
-        $this->authorize('create', GradeItem::class);
+        $this->authorize('create', [GradeItem::class, $section]);
 
         $item = $this->gradeItemService->create($request->user(), $section, $request->validated());
         return ApiEnvelope::data($item, 201);

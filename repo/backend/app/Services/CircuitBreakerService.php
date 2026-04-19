@@ -11,7 +11,7 @@ use CampusLearn\Observability\CircuitBreakerPolicy;
 use CampusLearn\Observability\ErrorRateWindow;
 use Illuminate\Support\Facades\Log;
 
-final class CircuitBreakerService
+class CircuitBreakerService
 {
     public function __construct(
         private readonly CircuitBreakerPolicy $policy,

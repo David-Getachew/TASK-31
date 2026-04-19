@@ -33,7 +33,7 @@ final class AuthController extends Controller
     {
         /** @var \App\Models\User $user */
         $user = $request->user();
-        $this->authService->logout($user);
+        $this->authService->logout($user, $request->bearerToken());
 
         return ApiEnvelope::data(['message' => 'Logged out successfully.']);
     }

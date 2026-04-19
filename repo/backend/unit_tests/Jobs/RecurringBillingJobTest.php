@@ -25,7 +25,7 @@ test('handle generates bills for active schedules when run on configured day', f
     $category = FeeCategory::factory()->create(['is_taxable' => false]);
     BillSchedule::factory()->for($user)->for($category)->create([
         'amount_cents'  => 3000,
-        'schedule_type' => 'monthly',
+        'schedule_type' => 'recurring_monthly',
         'status'        => BillScheduleStatus::Active,
         'start_on'      => now()->toDateString(),
         'next_run_on'   => now()->toDateString(),
@@ -47,7 +47,7 @@ test('handle does nothing on a non-configured day of month', function () {
     $category = FeeCategory::factory()->create(['is_taxable' => false]);
     BillSchedule::factory()->for($user)->for($category)->create([
         'amount_cents'  => 3000,
-        'schedule_type' => 'monthly',
+        'schedule_type' => 'recurring_monthly',
         'status'        => BillScheduleStatus::Active,
         'start_on'      => now()->toDateString(),
         'next_run_on'   => now()->toDateString(),
@@ -68,7 +68,7 @@ test('handle advances next_run_on after generating recurring bill', function () 
     $category = FeeCategory::factory()->create(['is_taxable' => false]);
     $schedule = BillSchedule::factory()->for($user)->for($category)->create([
         'amount_cents'  => 5000,
-        'schedule_type' => 'monthly',
+        'schedule_type' => 'recurring_monthly',
         'status'        => BillScheduleStatus::Active,
         'start_on'      => now()->subMonth()->toDateString(),
         'next_run_on'   => now()->toDateString(),

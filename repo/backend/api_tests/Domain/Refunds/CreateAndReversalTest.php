@@ -15,7 +15,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 uses(RefreshDatabase::class);
 
 test('staff can create a refund request', function () {
-    $staff   = User::factory()->create(['status' => AccountStatus::Active]);
+    $staff   = User::factory()->asRegistrar()->create(['status' => AccountStatus::Active]);
     $student = User::factory()->create(['status' => AccountStatus::Active]);
     $bill    = Bill::factory()->for($student)->create([
         'total_cents'    => 10000,

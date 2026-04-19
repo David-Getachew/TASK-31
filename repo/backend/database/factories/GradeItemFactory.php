@@ -33,4 +33,12 @@ class GradeItemFactory extends Factory
             'published_at' => now(),
         ]);
     }
+
+    public function draft(): static
+    {
+        return $this->state(fn () => [
+            'state'        => GradeItemState::Draft,
+            'published_at' => null,
+        ]);
+    }
 }

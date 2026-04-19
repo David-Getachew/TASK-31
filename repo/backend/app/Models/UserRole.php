@@ -26,22 +26,35 @@ class UserRole extends Model
     public static function create(array $attributes = []): static
     {
         $roleValue = $attributes['role'] ?? null;
-        if ($roleValue instanceof RoleName) {
-            $roleValue = $roleValue->value;
+        $roleId = $attributes['role_id'] ?? null;
+
+        if ($roleId === null) {
+            if ($roleValue instanceof RoleName) {
+                $roleValue = $roleValue->value;
+            }
+            if (! is_string($roleValue) || $roleValue === '') {
+                throw new \InvalidArgumentException('UserRole::create requires role or role_id.');
+            }
+
+            $role = Role::firstOrCreate(
+                ['name' => $roleValue],
+                ['label' => ucfirst((string) $roleValue)],
+            );
+
+            $roleId = $role->id;
         }
 
-        $role = Role::firstOrCreate(
-            ['name' => $roleValue],
-            ['label' => ucfirst((string) $roleValue)],
-        );
-
-        return parent::create([
+        $model = new static();
+        $model->fill([
             'user_id'    => $attributes['user_id'],
-            'role_id'    => $role->id,
+            'role_id'    => $roleId,
             'scope_type' => $attributes['scope_type'] ?? 'global',
             'scope_id'   => $attributes['scope_id'] ?? null,
             'granted_by' => null,
             'granted_at' => now(),
         ]);
+        $model->save();
+
+        return $model;
     }
 }

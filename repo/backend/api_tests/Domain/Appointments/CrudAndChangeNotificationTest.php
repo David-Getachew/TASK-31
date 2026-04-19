@@ -21,7 +21,7 @@ test('staff can create an appointment', function () {
 
     $response = $this->actingAs($staff)->postJson('/api/v1/appointments', [
         'owner_user_id'   => $owner->id,
-        'resource_type'   => 'room',
+        'resource_type'   => 'facility',
         'scheduled_start' => now()->addDay()->toDateTimeString(),
         'scheduled_end'   => now()->addDay()->addHour()->toDateTimeString(),
     ]);
@@ -36,7 +36,7 @@ test('canceling appointment dispatches notification job', function () {
 
     $appointment = Appointment::create([
         'owner_user_id'   => $owner->id,
-        'resource_type'   => 'advisor',
+        'resource_type'   => 'registrar_meeting',
         'scheduled_start' => now()->addDay(),
         'scheduled_end'   => now()->addDay()->addHour(),
         'status'          => AppointmentStatus::Scheduled,

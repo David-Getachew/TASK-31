@@ -19,7 +19,7 @@ beforeEach(function () {
 });
 
 test('staff can approve an enrollment', function () {
-    $staff    = User::factory()->create(['status' => AccountStatus::Active]);
+    $staff    = User::factory()->asRegistrar()->create(['status' => AccountStatus::Active]);
     $student  = User::factory()->create(['status' => AccountStatus::Active]);
     $term     = Term::factory()->create();
     $course   = Course::factory()->for($term)->create();
@@ -29,7 +29,7 @@ test('staff can approve an enrollment', function () {
         'user_id'     => $student->id,
         'section_id'  => $section->id,
         'status'      => EnrollmentStatus::Withdrawn,
-        'enrolled_at' => null,
+        'enrolled_at' => now(),
     ]);
 
     $response = $this->actingAs($staff)->postJson("/api/v1/enrollments/{$enrollment->id}/approve");
@@ -38,7 +38,7 @@ test('staff can approve an enrollment', function () {
 });
 
 test('staff can deny an enrollment', function () {
-    $staff    = User::factory()->create(['status' => AccountStatus::Active]);
+    $staff    = User::factory()->asRegistrar()->create(['status' => AccountStatus::Active]);
     $student  = User::factory()->create(['status' => AccountStatus::Active]);
     $term     = Term::factory()->create();
     $course   = Course::factory()->for($term)->create();

@@ -19,5 +19,5 @@ export const notificationsAdapter = {
     http.get<ApiResponse<Record<string, boolean>>>('/notifications/preferences'),
 
   updatePreferences: (preferences: Record<string, boolean>) =>
-    http.patch<ApiResponse<{ updated: boolean }>>('/notifications/preferences', { preferences }),
+    http.put<ApiResponse<{ updated: boolean }>>('/notifications/preferences', { preferences }),
 }

@@ -16,6 +16,7 @@ class RequestMetric extends Model
         'status',
         'duration_ms',
         'user_id',
+        'created_at',
     ];
 
     protected $casts = [

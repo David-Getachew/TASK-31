@@ -131,12 +131,21 @@ final class AuthService
         ];
     }
 
-    public function logout(User $user): void
+    public function logout(User $user, ?string $bearerToken = null): void
     {
         /** @var PersonalAccessToken|null $currentToken */
         $currentToken = $user->currentAccessToken();
         if ($currentToken instanceof PersonalAccessToken) {
             $currentToken->delete();
+        } elseif (is_string($bearerToken) && $bearerToken !== '') {
+            $tokenModel = PersonalAccessToken::findToken($bearerToken);
+
+            if ($tokenModel !== null && (int) $tokenModel->tokenable_id === (int) $user->id) {
+                $tokenModel->delete();
+            }
+        } else {
+            // Fallback for cases where currentAccessToken is not hydrated.
+            $user->tokens()->delete();
         }
 
         AuditLogEntry::create([

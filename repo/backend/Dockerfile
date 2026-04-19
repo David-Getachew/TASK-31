@@ -18,8 +18,7 @@ RUN apk add --no-cache \
         zip \
         bcmath \
         gd \
-        pcntl \
-        opcache
+        pcntl
 
 # Install Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
@@ -28,7 +27,7 @@ WORKDIR /var/www/html
 
 # Install PHP dependencies first (layer cache)
 COPY composer.json composer.lock* ./
-RUN composer install --no-interaction --no-progress --optimize-autoloader
+RUN composer install --no-interaction --no-progress --optimize-autoloader --no-scripts
 
 # Copy application files
 COPY . .
@@ -43,4 +42,4 @@ COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 EXPOSE 8000
 
-CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+CMD ["sh", "-c", "php /var/www/html/artisan migrate --force --no-interaction && exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf"]

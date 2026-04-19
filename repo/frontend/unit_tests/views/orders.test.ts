@@ -6,6 +6,7 @@ import { defineComponent } from 'vue'
 
 vi.mock('../../src/adapters/http', () => ({
   default: { get: vi.fn(), post: vi.fn(), delete: vi.fn() },
+  generateIdempotencyKey: vi.fn(() => 'test-idempotency-key'),
 }))
 vi.mock('../../src/adapters/orders', () => ({
   ordersAdapter: {

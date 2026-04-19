@@ -4,6 +4,7 @@ namespace Database\Factories;
 
 use App\Enums\CourseStatus;
 use App\Models\Course;
+use App\Models\Term;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -16,6 +17,7 @@ class CourseFactory extends Factory
     public function definition(): array
     {
         return [
+            'term_id'     => Term::factory(),
             'code'        => strtoupper(fake()->unique()->bothify('???###')),
             'title'       => fake()->catchPhrase(),
             'description' => fake()->sentence(),

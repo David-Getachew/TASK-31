@@ -4,7 +4,7 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 
 COPY package.json package-lock.json* ./
-RUN npm ci --frozen-lockfile
+RUN if [ -f package-lock.json ]; then npm ci; else npm install; fi
 
 COPY . .
 RUN npm run build
@@ -14,9 +14,12 @@ FROM builder AS test
 # Inherits node, installed deps, and source from builder.
 # Vitest runs in this stage via: docker compose run --rm frontend-test npx vitest run unit_tests/
 
-# Stage 3: E2E test runner (Playwright chromium)
-FROM builder AS e2e-runner
-RUN npx playwright install --with-deps chromium
+# Stage 3: E2E test runner (Playwright image with browser deps preinstalled)
+FROM mcr.microsoft.com/playwright:v1.59.1-jammy AS e2e-runner
+WORKDIR /app
+COPY package.json package-lock.json* ./
+RUN if [ -f package-lock.json ]; then npm ci; else npm install; fi
+COPY . .
 
 # Stage 4: Serve with nginx (production)
 FROM nginx:alpine AS runtime

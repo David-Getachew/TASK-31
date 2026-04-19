@@ -8,7 +8,7 @@ use App\Models\BillSchedule;
 use App\Models\FeeCategory;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Artisan;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Carbon;
 
 uses(RefreshDatabase::class);
@@ -21,7 +21,7 @@ test('artisan recurring command generates bills for active schedules on configur
     $category = FeeCategory::factory()->create(['is_taxable' => false]);
     BillSchedule::factory()->for($user)->for($category)->create([
         'amount_cents'  => 4000,
-        'schedule_type' => 'monthly',
+        'schedule_type' => 'recurring_monthly',
         'status'        => BillScheduleStatus::Active,
         'start_on'      => now()->subMonth()->toDateString(),
         'next_run_on'   => now()->toDateString(),
@@ -46,7 +46,7 @@ test('artisan recurring command skips generation on non-configured day', functio
     $category = FeeCategory::factory()->create(['is_taxable' => false]);
     BillSchedule::factory()->for($user)->for($category)->create([
         'amount_cents'  => 4000,
-        'schedule_type' => 'monthly',
+        'schedule_type' => 'recurring_monthly',
         'status'        => BillScheduleStatus::Active,
         'start_on'      => now()->subMonth()->toDateString(),
         'next_run_on'   => now()->toDateString(),

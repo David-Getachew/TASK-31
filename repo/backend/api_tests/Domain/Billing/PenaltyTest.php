@@ -7,7 +7,7 @@ use App\Enums\BillStatus;
 use App\Models\Bill;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Artisan;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Carbon;
 
 uses(RefreshDatabase::class);

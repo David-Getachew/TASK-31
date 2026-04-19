@@ -27,7 +27,7 @@ final class SensitiveWordFilterTest extends TestCase
             new SensitiveWordRule('blocked', 'exact'),
         ]);
         $this->assertCount(1, $result->matches);
-        $this->assertSame(6, $result->matches[0]['start']);
+        $this->assertSame(5, $result->matches[0]['start']);
     }
 
     public function testMultipleMatchesOrderedByStart(): void

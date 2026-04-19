@@ -52,6 +52,8 @@ services:
       DB_DATABASE: "${DB_DATABASE:-campuslearn}"
       DB_USERNAME: "${DB_USERNAME:-campuslearn}"
       DB_PASSWORD: "${DB_PASSWORD}"
+      CACHE_STORE: "${CACHE_STORE:-file}"
+      CACHE_DRIVER: "${CACHE_DRIVER:-file}"
       QUEUE_CONNECTION: database
       LOG_CHANNEL: "${LOG_CHANNEL:-stack}"
       BACKUP_ENCRYPTION_KEY: "${BACKUP_ENCRYPTION_KEY}"

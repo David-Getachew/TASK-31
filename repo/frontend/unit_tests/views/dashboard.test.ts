@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
-import { setActivePinia, createPinia } from 'pinia'
+import { setActivePinia, createPinia, type Pinia } from 'pinia'
 import { createRouter, createMemoryHistory } from 'vue-router'
 import { defineComponent } from 'vue'
 
@@ -40,33 +40,39 @@ const router = createRouter({
   ],
 })
 
-function mountWithPinia(component: any) {
-  return mount(component, { global: { plugins: [createPinia(), router] } })
+function mountWithPinia(component: any, pinia: Pinia) {
+  return mount(component, { global: { plugins: [pinia, router] } })
 }
 
 describe('StudentDashboard', () => {
   beforeEach(() => setActivePinia(createPinia()))
 
   it('shows loading spinner while fetching', () => {
+    const pinia = createPinia()
+    setActivePinia(pinia)
     vi.mocked(dashboardAdapter.summary).mockReturnValue(new Promise(() => {}))
     const store = useDashboardStore()
     store.loading = true
-    const wrapper = mountWithPinia(StudentDashboard)
-    expect(wrapper.text()).toContain('Loading')
+    const wrapper = mountWithPinia(StudentDashboard, pinia)
+    expect(wrapper.text()).toContain('Loading your dashboard')
   })
 
   it('shows error state when fetch fails', async () => {
+    const pinia = createPinia()
+    setActivePinia(pinia)
     vi.mocked(dashboardAdapter.summary).mockRejectedValueOnce({ message: 'Server error' })
-    const wrapper = mountWithPinia(StudentDashboard)
+    const wrapper = mountWithPinia(StudentDashboard, pinia)
     await new Promise((r) => setTimeout(r, 10))
     expect(wrapper.text()).toContain('Server error')
   })
 
   it('renders summary cards when data is available', async () => {
+    const pinia = createPinia()
+    setActivePinia(pinia)
     vi.mocked(dashboardAdapter.summary).mockResolvedValueOnce({
       data: { data: { enrolled_sections: 3, open_bills: 2, unread_notifications: 5, pending_orders: 1 } },
     } as any)
-    const wrapper = mountWithPinia(StudentDashboard)
+    const wrapper = mountWithPinia(StudentDashboard, pinia)
     await new Promise((r) => setTimeout(r, 10))
     expect(wrapper.text()).toContain('Enrolled Sections')
     expect(wrapper.text()).toContain('Open Bills')
@@ -78,19 +84,23 @@ describe('AdminDashboard', () => {
   beforeEach(() => setActivePinia(createPinia()))
 
   it('shows circuit breaker alert when circuit is open', async () => {
+    const pinia = createPinia()
+    setActivePinia(pinia)
     vi.mocked(dashboardAdapter.summary).mockResolvedValueOnce({
       data: { data: { circuit_status: 'open', moderation_queue_size: 0, reconciliation_flags: 0 } },
     } as any)
-    const wrapper = mountWithPinia(AdminDashboard)
+    const wrapper = mountWithPinia(AdminDashboard, pinia)
     await new Promise((r) => setTimeout(r, 10))
     expect(wrapper.text()).toContain('read-only mode')
   })
 
   it('shows moderation queue count', async () => {
+    const pinia = createPinia()
+    setActivePinia(pinia)
     vi.mocked(dashboardAdapter.summary).mockResolvedValueOnce({
       data: { data: { moderation_queue_size: 7, reconciliation_flags: 3 } },
     } as any)
-    const wrapper = mountWithPinia(AdminDashboard)
+    const wrapper = mountWithPinia(AdminDashboard, pinia)
     await new Promise((r) => setTimeout(r, 10))
     expect(wrapper.text()).toContain('Moderation Queue')
     expect(wrapper.text()).toContain('7')

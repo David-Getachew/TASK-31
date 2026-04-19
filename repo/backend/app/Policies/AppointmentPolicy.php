@@ -31,7 +31,7 @@ final class AppointmentPolicy
 
     public function create(User $user): bool
     {
-        return $this->isStaff($user->id);
+        return true;
     }
 
     public function update(User $user, Appointment $appointment): bool

@@ -24,15 +24,16 @@ final class NotificationController extends Controller
         $userId     = $request->user()->id;
         $category   = $request->query('category');
         $unreadOnly = $request->boolean('unread_only');
+        $perPage    = (int) $request->integer('per_page', 20);
 
-        $notifications = $this->notificationService->list($userId, $category, $unreadOnly);
+        $notifications = $this->notificationService->list($userId, $category, $unreadOnly, $perPage);
         return ApiEnvelope::data($notifications);
     }
 
     public function unreadCount(Request $request): JsonResponse
     {
         $counts = $this->notificationService->unreadCount($request->user()->id);
-        return ApiEnvelope::data($counts);
+        return ApiEnvelope::data($counts['by_category'] ?? []);
     }
 
     public function markRead(BulkMarkReadRequest $request): JsonResponse
@@ -64,10 +65,10 @@ final class NotificationController extends Controller
 
     public function updatePreferences(UpdateNotificationPreferencesRequest $request): JsonResponse
     {
-        $this->notificationService->updatePreferences(
+        $prefs = $this->notificationService->updatePreferences(
             $request->user()->id,
             $request->input('preferences'),
         );
-        return ApiEnvelope::data(['updated' => true]);
+        return ApiEnvelope::data($prefs);
     }
 }

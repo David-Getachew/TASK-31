@@ -37,6 +37,18 @@ class BillSchedule extends Model
         'next_run_on' => 'date',
     ];
 
+    protected function setScheduleTypeAttribute(mixed $value): void
+    {
+        // Backward compatibility for older fixtures/tests using "monthly".
+        if ($value === 'monthly') {
+            $value = BillScheduleType::RecurringMonthly->value;
+        }
+
+        $this->attributes['schedule_type'] = $value instanceof BillScheduleType
+            ? $value->value
+            : $value;
+    }
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);

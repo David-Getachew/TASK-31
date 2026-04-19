@@ -25,8 +25,8 @@ final class DiagnosticExportService
             $export = DiagnosticExport::create([
                 'initiated_by'     => $actor->id,
                 'status'           => DiagnosticExportStatus::Running,
-                'file_path'        => null,
-                'file_size_bytes'  => null,
+                'file_path'        => 'pending',
+                'file_size_bytes'  => 0,
                 'checksum_sha256'  => null,
                 'encryption_key_id' => 'diagnostic-key-v1',
                 'completed_at'     => null,

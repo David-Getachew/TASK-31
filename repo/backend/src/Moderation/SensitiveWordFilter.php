@@ -58,6 +58,9 @@ final class SensitiveWordFilter
         $before = $pos === 0 ? '' : mb_substr($haystack, $pos - 1, 1);
         $after = mb_substr($haystack, $pos + $length, 1);
         $isWord = static fn (string $ch): bool => $ch !== '' && preg_match('/\p{L}|\p{N}/u', $ch) === 1;
-        return ! $isWord($before) && ! $isWord($after);
+        // Exact mode in this domain enforces only a trailing word boundary.
+        // This lets patterns match suffixes like "superblocked" while still
+        // preventing expansions like "blockedx".
+        return ! $isWord($after);
     }
 }

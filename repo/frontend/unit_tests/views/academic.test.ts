@@ -20,6 +20,7 @@ vi.mock('../../src/adapters/notifications', () => ({
 }))
 
 import http from '../../src/adapters/http'
+import { useAuthStore } from '../../src/stores/auth'
 import GradeItemsView  from '../../src/views/academic/GradeItemsView.vue'
 import RosterImportView from '../../src/views/academic/RosterImportView.vue'
 
@@ -32,16 +33,40 @@ describe('GradeItemsView', () => {
   beforeEach(() => setActivePinia(createPinia()))
 
   it('renders empty state when no items', async () => {
+    const pinia = createPinia()
+    setActivePinia(pinia)
+
+    const auth = useAuthStore()
+    auth.setSession('test-token', new Date(Date.now() + 60_000).toISOString())
+    auth.setUser({
+      id: 1,
+      name: 'Teacher',
+      email: 'teacher@example.com',
+      roles: [{ name: 'teacher', scope_type: 'section', scope_id: 1 }],
+    })
+
     vi.mocked(http.get).mockResolvedValue({
       data: { data: [], meta: { page: 1, per_page: 20, total: 0, last_page: 1 } },
     } as any)
 
-    const wrapper = mount(GradeItemsView, { global: { plugins: [createPinia(), router] } })
+    const wrapper = mount(GradeItemsView, { global: { plugins: [pinia, router] } })
     await new Promise((r) => setTimeout(r, 20))
     expect(wrapper.text()).toContain('No grade items')
   })
 
   it('shows Publish button for draft items', async () => {
+    const pinia = createPinia()
+    setActivePinia(pinia)
+
+    const auth = useAuthStore()
+    auth.setSession('test-token', new Date(Date.now() + 60_000).toISOString())
+    auth.setUser({
+      id: 1,
+      name: 'Teacher',
+      email: 'teacher@example.com',
+      roles: [{ name: 'teacher', scope_type: 'section', scope_id: 1 }],
+    })
+
     vi.mocked(http.get).mockResolvedValue({
       data: {
         data: [{
@@ -52,7 +77,7 @@ describe('GradeItemsView', () => {
       },
     } as any)
 
-    const wrapper = mount(GradeItemsView, { global: { plugins: [createPinia(), router] } })
+    const wrapper = mount(GradeItemsView, { global: { plugins: [pinia, router] } })
     await new Promise((r) => setTimeout(r, 20))
     expect(wrapper.text()).toContain('Publish')
   })
@@ -62,16 +87,40 @@ describe('RosterImportView', () => {
   beforeEach(() => setActivePinia(createPinia()))
 
   it('renders file input for upload', async () => {
+    const pinia = createPinia()
+    setActivePinia(pinia)
+
+    const auth = useAuthStore()
+    auth.setSession('test-token', new Date(Date.now() + 60_000).toISOString())
+    auth.setUser({
+      id: 2,
+      name: 'Registrar',
+      email: 'registrar@example.com',
+      roles: [{ name: 'registrar', scope_type: 'global', scope_id: null }],
+    })
+
     vi.mocked(http.get).mockResolvedValue({
       data: { data: [], meta: { page: 1, per_page: 20, total: 0, last_page: 1 } },
     } as any)
 
-    const wrapper = mount(RosterImportView, { global: { plugins: [createPinia(), router] } })
+    const wrapper = mount(RosterImportView, { global: { plugins: [pinia, router] } })
     await new Promise((r) => setTimeout(r, 20))
     expect(wrapper.find('input[type="file"]').exists()).toBe(true)
   })
 
   it('shows error table when import has errors', async () => {
+    const pinia = createPinia()
+    setActivePinia(pinia)
+
+    const auth = useAuthStore()
+    auth.setSession('test-token', new Date(Date.now() + 60_000).toISOString())
+    auth.setUser({
+      id: 2,
+      name: 'Registrar',
+      email: 'registrar@example.com',
+      roles: [{ name: 'registrar', scope_type: 'global', scope_id: null }],
+    })
+
     vi.mocked(http.get).mockResolvedValue({
       data: {
         data: [{
@@ -84,7 +133,7 @@ describe('RosterImportView', () => {
       },
     } as any)
 
-    const wrapper = mount(RosterImportView, { global: { plugins: [createPinia(), router] } })
+    const wrapper = mount(RosterImportView, { global: { plugins: [pinia, router] } })
     await new Promise((r) => setTimeout(r, 20))
     expect(wrapper.text()).toContain('View errors')
   })

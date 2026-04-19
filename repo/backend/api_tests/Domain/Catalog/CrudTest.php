@@ -36,7 +36,7 @@ test('GET /catalog returns active items to authenticated users', function () {
     $response = $this->actingAs($user)->getJson('/api/v1/catalog');
 
     $response->assertStatus(200);
-    $items = $response->json('data');
+    $items = $response->json('data.data');
     foreach ($items as $item) {
         expect($item['is_active'])->toBeTrue();
     }

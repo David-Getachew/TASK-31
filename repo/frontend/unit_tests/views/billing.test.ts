@@ -1,7 +1,10 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 
-vi.mock('../../src/adapters/http', () => ({ default: { get: vi.fn(), post: vi.fn(), patch: vi.fn() } }))
+vi.mock('../../src/adapters/http', () => ({
+  default: { get: vi.fn(), post: vi.fn(), patch: vi.fn() },
+  generateIdempotencyKey: vi.fn(() => 'test-idempotency-key'),
+}))
 vi.mock('../../src/adapters/bills', () => ({
   billsAdapter: {
     mine:           vi.fn(),

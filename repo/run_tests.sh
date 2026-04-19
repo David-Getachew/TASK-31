@@ -16,14 +16,14 @@ fail() { log "FAIL: $1"; FAIL=$((FAIL + 1)); }
 run_backend_unit() {
   log "--- Backend unit tests (repo/backend/unit_tests/) ---"
   docker compose run --rm backend \
-    php artisan test --testsuite=Unit --colors=always \
+    sh -lc 'set +e; failed=0; for f in $(find unit_tests -name "*Test.php" | sort); do echo "[unit] $f"; ./vendor/bin/pest "$f" --colors=always || failed=1; done; exit $failed' \
     && pass "backend-unit" || fail "backend-unit"
 }
 
 run_backend_api() {
   log "--- Backend API/integration tests (repo/backend/api_tests/) ---"
   docker compose run --rm backend \
-    php artisan test --testsuite=Api --colors=always \
+    sh -lc 'set +e; failed=0; for f in $(find api_tests -name "*Test.php" | sort); do echo "[api] $f"; ./vendor/bin/pest "$f" --colors=always || failed=1; done; exit $failed' \
     && pass "backend-api" || fail "backend-api"
 }
 

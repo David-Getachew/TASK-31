@@ -4,8 +4,9 @@ namespace Database\Factories;
 
 use App\Enums\AccountStatus;
 use App\Enums\RoleName;
+use App\Models\Role;
+use App\Models\RoleAssignment;
 use App\Models\User;
-use App\Models\UserRole;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 
@@ -42,11 +43,17 @@ class UserFactory extends Factory
     public function asAdmin(): static
     {
         return $this->afterCreating(function (User $user): void {
-            UserRole::create([
+            $role = Role::query()->firstOrCreate(
+                ['name' => RoleName::Administrator->value],
+                ['label' => 'Administrator'],
+            );
+
+            RoleAssignment::query()->create([
                 'user_id'    => $user->id,
-                'role'       => RoleName::Administrator,
+                'role_id'    => $role->id,
                 'scope_type' => 'global',
                 'scope_id'   => null,
+                'granted_at' => now(),
             ]);
         });
     }
@@ -54,11 +61,17 @@ class UserFactory extends Factory
     public function asStudent(): static
     {
         return $this->afterCreating(function (User $user): void {
-            UserRole::create([
+            $role = Role::query()->firstOrCreate(
+                ['name' => RoleName::Student->value],
+                ['label' => 'Student'],
+            );
+
+            RoleAssignment::query()->create([
                 'user_id'    => $user->id,
-                'role'       => RoleName::Student,
+                'role_id'    => $role->id,
                 'scope_type' => 'global',
                 'scope_id'   => null,
+                'granted_at' => now(),
             ]);
         });
     }
@@ -66,11 +79,17 @@ class UserFactory extends Factory
     public function asTeacher(): static
     {
         return $this->afterCreating(function (User $user): void {
-            UserRole::create([
+            $role = Role::query()->firstOrCreate(
+                ['name' => RoleName::Teacher->value],
+                ['label' => 'Teacher'],
+            );
+
+            RoleAssignment::query()->create([
                 'user_id'    => $user->id,
-                'role'       => RoleName::Teacher,
+                'role_id'    => $role->id,
                 'scope_type' => 'global',
                 'scope_id'   => null,
+                'granted_at' => now(),
             ]);
         });
     }
@@ -78,11 +97,17 @@ class UserFactory extends Factory
     public function asRegistrar(): static
     {
         return $this->afterCreating(function (User $user): void {
-            UserRole::create([
+            $role = Role::query()->firstOrCreate(
+                ['name' => RoleName::Registrar->value],
+                ['label' => 'Registrar'],
+            );
+
+            RoleAssignment::query()->create([
                 'user_id'    => $user->id,
-                'role'       => RoleName::Registrar,
+                'role_id'    => $role->id,
                 'scope_type' => 'global',
                 'scope_id'   => null,
+                'granted_at' => now(),
             ]);
         });
     }

@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace CampusLearn\Support\Exceptions;
 
-use DomainException;
+use RuntimeException;
 
-final class InvalidStateTransition extends DomainException
+final class InvalidStateTransition extends RuntimeException
 {
     public function __construct(
         string $domain,

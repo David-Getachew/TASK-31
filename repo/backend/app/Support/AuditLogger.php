@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Support;
 
 use App\Models\AuditLogEntry;
+use App\Models\User;
 use Illuminate\Support\Str;
 
 final class AuditLogger
@@ -22,6 +23,10 @@ final class AuditLogger
         ?int $targetId,
         array $payload = [],
     ): AuditLogEntry {
+        $actorUserId = ($actorUserId !== null && User::whereKey($actorUserId)->exists())
+            ? $actorUserId
+            : null;
+
         return AuditLogEntry::create([
             'actor_user_id'  => $actorUserId,
             'action'         => $action,
