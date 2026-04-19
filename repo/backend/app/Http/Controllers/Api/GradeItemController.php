@@ -44,7 +44,7 @@ final class GradeItemController extends Controller
 
     public function publish(Section $section, GradeItem $gradeItem): JsonResponse
     {
-        $this->authorize('update', $gradeItem);
+        $this->authorize('publish', $gradeItem);
 
         $item = $this->gradeItemService->publish(request()->user(), $gradeItem);
         return ApiEnvelope::data($item);

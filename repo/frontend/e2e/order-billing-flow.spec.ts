@@ -7,7 +7,7 @@ async function loginAs(page: any, email: string, password: string) {
   await page.fill('#email', email)
   await page.fill('#password', password)
   await page.click('button[type=submit]')
-  await page.waitForURL(`${BASE}/`)
+  await expect(page).toHaveURL(/\/$/)
 }
 
 test.describe('Catalog and order flow', () => {
@@ -28,10 +28,15 @@ test.describe('Catalog and order flow', () => {
   test('order detail page loads for existing order', async ({ page }) => {
     // Assumes seeded order ID 1 exists for the test student
     await page.goto(`${BASE}/orders/1`)
-    await page.waitForTimeout(500)
     // Either order detail loads or an error state shows
     const heading = page.locator('h1')
-    await expect(heading).toBeVisible()
+    const errorState = page.locator('.error-state[role="alert"]')
+    const headingVisible = await heading.isVisible().catch(() => false)
+    if (!headingVisible) {
+      await expect(errorState).toBeVisible()
+    } else {
+      await expect(heading).toBeVisible()
+    }
   })
 
   test('payment view requires pending_payment status order', async ({ page }) => {

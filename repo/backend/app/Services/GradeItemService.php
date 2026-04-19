@@ -9,6 +9,7 @@ use App\Models\GradeItem;
 use App\Models\Section;
 use App\Models\User;
 use App\Support\AuditLogger;
+use CampusLearn\Support\Exceptions\ConflictException;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
@@ -71,7 +72,7 @@ final class GradeItemService
     {
         return DB::transaction(function () use ($actor, $item): GradeItem {
             if ($item->state === GradeItemState::Published) {
-                throw new RuntimeException('Grade item is already published.');
+                throw new ConflictException('Grade item is already published.');
             }
 
             $item->update([

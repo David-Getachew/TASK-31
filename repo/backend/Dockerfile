@@ -42,4 +42,4 @@ COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 EXPOSE 8000
 
-CMD ["sh", "-c", "php /var/www/html/artisan migrate --force --no-interaction && exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf"]
+CMD ["sh", "-c", "php /var/www/html/artisan migrate --force --no-interaction && php /var/www/html/artisan db:seed --class=Database\\\\Seeders\\\\DatabaseSeeder --force --no-interaction && if [ \"${SEED_DEMO_USERS:-true}\" = \"true\" ]; then php /var/www/html/artisan db:seed --class=Database\\\\Seeders\\\\E2eTestSeeder --force --no-interaction; fi && exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf"]

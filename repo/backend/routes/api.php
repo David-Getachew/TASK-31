@@ -188,12 +188,15 @@ Route::prefix('v1')->group(function () {
         Route::get('/refunds', [RefundController::class, 'index'])->name('refunds.index');
         Route::get('/refunds/{refund}', [RefundController::class, 'show'])->name('refunds.show');
         Route::get('/refund-reason-codes', [RefundController::class, 'reasonCodes'])->name('refund-reason-codes.index');
+        Route::post('/admin/refunds/{refund}/approve', [RefundController::class, 'approve'])->name('refunds.approve');
+        Route::post('/admin/refunds/{refund}/reject', [RefundController::class, 'reject'])->name('refunds.reject');
 
         // Ledger + reconciliation
         Route::get('/admin/ledger', [LedgerController::class, 'index'])->name('ledger.index');
         Route::get('/admin/reconciliation', [ReconciliationController::class, 'index'])->name('reconciliation.index');
         Route::get('/admin/reconciliation/summary', [ReconciliationController::class, 'summary'])->name('reconciliation.summary');
         Route::post('/admin/reconciliation/{reconciliationFlag}/resolve', [ReconciliationController::class, 'resolve'])->name('reconciliation.resolve');
+        Route::post('/admin/reconciliation-flags/{reconciliationFlag}/resolve', [ReconciliationController::class, 'resolve'])->name('reconciliation-flags.resolve');
 
         // Appointments
         Route::get('/appointments', [AppointmentController::class, 'index'])->name('appointments.index');

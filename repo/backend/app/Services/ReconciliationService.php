@@ -8,9 +8,9 @@ use App\Enums\ReconciliationStatus;
 use App\Models\ReconciliationFlag;
 use App\Models\User;
 use App\Support\AuditLogger;
+use CampusLearn\Support\Exceptions\InvalidStateTransition;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
-use RuntimeException;
 
 final class ReconciliationService
 {
@@ -30,7 +30,7 @@ final class ReconciliationService
     {
         return DB::transaction(function () use ($actor, $flag, $notes): ReconciliationFlag {
             if ($flag->status === ReconciliationStatus::Resolved) {
-                throw new RuntimeException('Flag is already resolved.');
+                throw new InvalidStateTransition('reconciliation', ReconciliationStatus::Resolved->value, 'resolve');
             }
 
             $flag->update([

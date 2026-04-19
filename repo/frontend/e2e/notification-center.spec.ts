@@ -7,7 +7,7 @@ async function loginAs(page: any, email: string, password: string) {
   await page.fill('#email', email)
   await page.fill('#password', password)
   await page.click('button[type=submit]')
-  await page.waitForURL(`${BASE}/`)
+  await expect(page).toHaveURL(/\/$/)
 }
 
 test.describe('Notification Center', () => {
@@ -22,15 +22,15 @@ test.describe('Notification Center', () => {
 
   test('category tabs are rendered', async ({ page }) => {
     await page.goto(`${BASE}/notifications`)
-    await expect(page.locator('role=tab[name="All"]')).toBeVisible()
-    await expect(page.locator('role=tab[name="Billing"]')).toBeVisible()
-    await expect(page.locator('role=tab[name="Mentions"]')).toBeVisible()
+    await expect(page.getByRole('tab', { name: 'All' })).toBeVisible()
+    await expect(page.getByRole('tab', { name: 'Billing' })).toBeVisible()
+    await expect(page.getByRole('tab', { name: 'Mentions' })).toBeVisible()
   })
 
   test('preferences link navigates to preferences page', async ({ page }) => {
     await page.goto(`${BASE}/notifications`)
     await page.click('a:has-text("Preferences")')
-    await expect(page).toHaveURL(`${BASE}/notifications/preferences`)
+    await expect(page).toHaveURL(/\/notifications\/preferences$/)
     await expect(page.locator('h1')).toContainText('Notification Preferences')
   })
 
@@ -41,7 +41,6 @@ test.describe('Notification Center', () => {
 
   test('unread-only filter applies', async ({ page }) => {
     await page.goto(`${BASE}/notifications`)
-    const checkbox = page.locator('input[type=checkbox][id=""]').first()
     // Just verify the filter checkbox exists
     await expect(page.locator('text=Unread only')).toBeVisible()
   })

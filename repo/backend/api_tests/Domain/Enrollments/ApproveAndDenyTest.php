@@ -10,13 +10,8 @@ use App\Models\Section;
 use App\Models\Term;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Queue;
 
 uses(RefreshDatabase::class);
-
-beforeEach(function () {
-    Queue::fake();
-});
 
 test('staff can approve an enrollment', function () {
     $staff    = User::factory()->asRegistrar()->create(['status' => AccountStatus::Active]);
@@ -35,6 +30,11 @@ test('staff can approve an enrollment', function () {
     $response = $this->actingAs($staff)->postJson("/api/v1/enrollments/{$enrollment->id}/approve");
     $response->assertStatus(200)
         ->assertJsonPath('data.status', EnrollmentStatus::Enrolled->value);
+
+    $this->assertDatabaseHas('enrollments', [
+        'id' => $enrollment->id,
+        'status' => EnrollmentStatus::Enrolled->value,
+    ]);
 });
 
 test('staff can deny an enrollment', function () {
@@ -54,4 +54,9 @@ test('staff can deny an enrollment', function () {
     $response = $this->actingAs($staff)->postJson("/api/v1/enrollments/{$enrollment->id}/deny");
     $response->assertStatus(200)
         ->assertJsonPath('data.status', EnrollmentStatus::Withdrawn->value);
+
+    $this->assertDatabaseHas('enrollments', [
+        'id' => $enrollment->id,
+        'status' => EnrollmentStatus::Withdrawn->value,
+    ]);
 });

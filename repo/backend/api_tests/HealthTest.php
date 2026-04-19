@@ -31,8 +31,7 @@ test('GET /api/v1/health/metrics requires authentication', function () {
 });
 
 test('GET /api/health returns 503 when queue is unavailable', function () {
-    \Illuminate\Support\Facades\Queue::shouldReceive('size')
-        ->andThrow(new \RuntimeException('Queue connection refused'));
+    config(['queue.default' => 'invalid_driver']);
 
     $this->getJson('/api/health')
         ->assertStatus(503)

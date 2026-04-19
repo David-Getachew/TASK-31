@@ -11,6 +11,19 @@ class Enrollment extends Model
 {
     use HasFactory;
 
+    protected static function booted(): void
+    {
+        static::creating(function (self $enrollment): void {
+            if ($enrollment->enrolled_at === null) {
+                $enrollment->enrolled_at = now();
+            }
+
+            if ($enrollment->status === EnrollmentStatus::Withdrawn && $enrollment->withdrawn_at === null) {
+                $enrollment->withdrawn_at = now();
+            }
+        });
+    }
+
     protected $fillable = [
         'user_id',
         'section_id',

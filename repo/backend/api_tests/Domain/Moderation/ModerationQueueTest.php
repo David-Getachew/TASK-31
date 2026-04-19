@@ -35,7 +35,7 @@ it('admin can hide a visible thread', function () {
     $response->assertOk()
         ->assertJsonPath('data.state', 'hidden');
 
-    expect($thread->fresh()->state)->toBe('hidden');
+    expect($thread->fresh()->state->value)->toBe('hidden');
 });
 
 it('admin can restore a hidden thread', function () {

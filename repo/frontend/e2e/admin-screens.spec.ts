@@ -11,7 +11,7 @@ test.describe('Admin screens', () => {
     await page.fill('#email', 'admin@example.com')
     await page.fill('#password', 'AdminPass999!')
     await page.click('button[type=submit]')
-    await page.waitForURL(`${BASE}/`)
+    await expect(page).toHaveURL(/\/$/)
   })
 
   test('health view loads and shows status indicators', async ({ page }) => {
@@ -22,7 +22,7 @@ test.describe('Admin screens', () => {
 
   test('diagnostics admin view loads and trigger button is present', async ({ page }) => {
     await page.goto(`${BASE}/admin/diagnostics`)
-    await expect(page.locator('h1')).toContainText('Diagnostics')
+    await expect(page.locator('h1')).toContainText('Diagnostic Exports')
     await expect(page.locator('button:has-text("Export"), button:has-text("Trigger"), button:has-text("Generate")')).toBeVisible()
   })
 
@@ -30,12 +30,12 @@ test.describe('Admin screens', () => {
     await page.goto(`${BASE}/admin/backups`)
     await expect(page.locator('h1')).toContainText('Backup')
     // Either shows a table of backups or an empty state message
-    await expect(page.locator('table, [class*="empty"], [class*="no-data"]')).toBeVisible()
+    await expect(page.locator('table').or(page.getByText('No backups found.'))).toBeVisible()
   })
 
   test('DR admin view loads and drill form is present', async ({ page }) => {
     await page.goto(`${BASE}/admin/dr`)
     await expect(page.locator('h1')).toContainText('Disaster Recovery')
-    await expect(page.locator('button:has-text("Drill"), button:has-text("Run"), form')).toBeVisible()
+    await expect(page.locator('form.drill-form')).toBeVisible()
   })
 })

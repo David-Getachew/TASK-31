@@ -60,7 +60,7 @@ it('reconciliation flag can be resolved by admin', function () {
         ->assertOk()
         ->assertJsonPath('data.status', 'resolved');
 
-    expect($flag->fresh()->status)->toBe('resolved');
+    expect($flag->fresh()->status->value)->toBe('resolved');
 });
 
 it('resolved flag cannot be resolved again', function () {

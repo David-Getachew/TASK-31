@@ -5,10 +5,20 @@ namespace App\Models;
 use App\Enums\LedgerEntryType;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Str;
 
 class LedgerEntry extends Model
 {
     public $timestamps = false;
+
+    protected static function booted(): void
+    {
+        static::creating(function (self $entry): void {
+            if (empty($entry->correlation_id)) {
+                $entry->correlation_id = (string) Str::uuid();
+            }
+        });
+    }
 
     protected $fillable = [
         'user_id',

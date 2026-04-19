@@ -7,13 +7,8 @@ use App\Enums\AppointmentStatus;
 use App\Models\Appointment;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Queue;
 
 uses(RefreshDatabase::class);
-
-beforeEach(function () {
-    Queue::fake();
-});
 
 test('staff can create an appointment', function () {
     $staff  = User::factory()->create(['status' => AccountStatus::Active]);
@@ -27,7 +22,15 @@ test('staff can create an appointment', function () {
     ]);
 
     $response->assertStatus(201)
+        ->assertJsonPath('data.owner_user_id', $owner->id)
+        ->assertJsonPath('data.resource_type', 'facility')
         ->assertJsonPath('data.status', AppointmentStatus::Scheduled->value);
+
+    $this->assertDatabaseHas('appointments', [
+        'id' => $response->json('data.id'),
+        'owner_user_id' => $owner->id,
+        'status' => AppointmentStatus::Scheduled->value,
+    ]);
 });
 
 test('canceling appointment dispatches notification job', function () {
@@ -47,4 +50,5 @@ test('canceling appointment dispatches notification job', function () {
         ->assertStatus(204);
 
     expect($appointment->fresh()->status)->toBe(AppointmentStatus::Canceled);
+    expect($appointment->fresh()->scheduled_start)->not->toBeNull();
 });

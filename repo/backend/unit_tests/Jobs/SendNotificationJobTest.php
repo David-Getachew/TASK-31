@@ -3,11 +3,17 @@
 declare(strict_types=1);
 
 use App\Jobs\SendNotificationJob;
+use App\Models\Notification;
 use App\Models\NotificationDelivery;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
+
+beforeEach(function (): void {
+    NotificationDelivery::query()->delete();
+    Notification::query()->delete();
+});
 
 test('writes notification row and delivery row per recipient', function () {
     $user = User::factory()->create();
@@ -42,6 +48,6 @@ test('handles multiple recipients', function () {
 
     $job->handle(app(\CampusLearn\Notifications\Contracts\NotificationWriter::class));
 
-    expect(\App\Models\Notification::count())->toBe(2);
+    expect(Notification::count())->toBe(2);
     expect(NotificationDelivery::count())->toBe(2);
 });

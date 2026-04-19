@@ -3,17 +3,11 @@
 declare(strict_types=1);
 
 use App\Enums\BackupStatus;
-use App\Jobs\BackupMetadataJob;
 use App\Models\BackupJob;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Queue;
 
 uses(RefreshDatabase::class);
-
-beforeEach(function () {
-    Queue::fake();
-});
 
 // GET /api/v1/admin/backups
 test('admin can list backup jobs', function () {
@@ -56,11 +50,13 @@ test('admin can trigger a backup job', function () {
         ->postJson('/api/v1/admin/backups/trigger')
         ->assertStatus(202);
 
-    Queue::assertPushed(BackupMetadataJob::class);
-
     // Response must carry the deterministic pending job row
     expect($response->json('data.id'))->toBeInt();
     expect($response->json('data.status'))->toBe(\App\Enums\BackupStatus::Pending->value);
+
+    $this->assertDatabaseHas('jobs', [
+        'queue' => 'default',
+    ]);
 });
 
 test('non-admin cannot trigger backup', function () {

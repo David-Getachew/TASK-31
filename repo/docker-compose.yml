@@ -42,8 +42,8 @@ services:
       - "8000:8000"
     environment:
       APP_ENV: "${APP_ENV:-local}"
-      # Generate with: php artisan key:generate --show
-      APP_KEY: "${APP_KEY}"
+      # Local default key allows zero-config startup; override for non-local usage.
+      APP_KEY: "${APP_KEY:-base64:by5ipvlCVjyDmh4xxNGVm0m3vy3tv4JgAH36EUbMTGs=}"
       APP_DEBUG: "${APP_DEBUG:-true}"
       APP_URL: "${APP_URL:-http://localhost:8000}"
       DB_CONNECTION: mysql
@@ -51,13 +51,14 @@ services:
       DB_PORT: 3306
       DB_DATABASE: "${DB_DATABASE:-campuslearn}"
       DB_USERNAME: "${DB_USERNAME:-campuslearn}"
-      DB_PASSWORD: "${DB_PASSWORD}"
+      DB_PASSWORD: "${DB_PASSWORD:-campuslearn_local}"
       CACHE_STORE: "${CACHE_STORE:-file}"
       CACHE_DRIVER: "${CACHE_DRIVER:-file}"
       QUEUE_CONNECTION: database
       LOG_CHANNEL: "${LOG_CHANNEL:-stack}"
-      BACKUP_ENCRYPTION_KEY: "${BACKUP_ENCRYPTION_KEY}"
-      DIAGNOSTIC_ENCRYPTION_KEY: "${DIAGNOSTIC_ENCRYPTION_KEY}"
+      SEED_DEMO_USERS: "${SEED_DEMO_USERS:-true}"
+      BACKUP_ENCRYPTION_KEY: "${BACKUP_ENCRYPTION_KEY:-b7b5aa1b9da4d59a7c092c55005b0954dc1d18d2acba9d96256ad0adde12fe49}"
+      DIAGNOSTIC_ENCRYPTION_KEY: "${DIAGNOSTIC_ENCRYPTION_KEY:-530998018beefe2cf9d3e61ada165dab23315ff683276f879fd3f36af8523d0e}"
     volumes:
       - backend_storage:/var/www/html/storage/app
       - backup_volume:/var/www/html/storage/backups
@@ -72,8 +73,8 @@ services:
     environment:
       MYSQL_DATABASE: "${DB_DATABASE:-campuslearn}"
       MYSQL_USER: "${DB_USERNAME:-campuslearn}"
-      MYSQL_PASSWORD: "${DB_PASSWORD}"
-      MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD}"
+      MYSQL_PASSWORD: "${DB_PASSWORD:-campuslearn_local}"
+      MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD:-campuslearn_root_local}"
     ports:
       - "3306:3306"
     volumes:

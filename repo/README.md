@@ -1,5 +1,7 @@
 # CampusLearn — Student Information & Billing Portal
 
+Project type: fullstack
+
 A full-stack offline LAN web platform for district-operated learning programs. Students, teachers, registrars, and administrators manage courses, communications, and fee-based services entirely on a local network. No internet connectivity is required or used at runtime.
 
 ---
@@ -102,16 +104,21 @@ All ports are LAN-local only. No public internet exposure.
 
 ## Environment Setup
 
-1. Copy the backend environment file:
-   ```bash
-   cp repo/backend/.env.example repo/backend/.env
-   ```
-2. Set required values in `.env`:
-   - `APP_KEY` — generate with `php artisan key:generate` inside the container.
-   - `DB_PASSWORD` — choose a strong local password.
-   - `BACKUP_ENCRYPTION_KEY` — 32-byte hex key for backup file encryption.
-   - `DIAGNOSTIC_ENCRYPTION_KEY` — 32-byte hex key for diagnostic export encryption.
-3. All other defaults in `.env.example` are correct for local development.
+For local development, both startup paths are now zero-config:
+
+- `docker-compose up --build` (hyphenated form) is supported.
+- `docker compose up --build` works without pre-creating env files.
+- `bash run_tests.sh` auto-creates `repo/.env` and `repo/backend/.env` when missing.
+
+You can still override any value via shell env vars or `repo/.env`.
+
+Defaults are local-only and include:
+
+- `APP_KEY`
+- `DB_PASSWORD`
+- `MYSQL_ROOT_PASSWORD`
+- `BACKUP_ENCRYPTION_KEY`
+- `DIAGNOSTIC_ENCRYPTION_KEY`
 
 ### Domain configuration (`config/campuslearn.php`)
 
@@ -135,6 +142,34 @@ Every domain invariant reads from this file — never hardcode. Override via env
 | `observability.circuit_reset_bps` | 100 | Error-rate threshold (bps) to reset breaker (`CircuitBreakerPolicy`) |
 | `observability.circuit_window_seconds` | 300 | Rolling error-rate window in seconds (`CircuitBreakerService`) |
 | `auth.token_ttl_minutes` | 720 | Sanctum token lifetime in minutes (12 hours default) |
+
+### Environment Variable Overrides
+
+Every key in `config/campuslearn.php` is overrideable via environment variables.
+
+| Config key | Env var |
+|---|---|
+| `moderation.edit_window_minutes` | `CL_EDIT_WINDOW_MINUTES` |
+| `orders.auto_close_minutes` | `CL_ORDER_AUTO_CLOSE_MINUTES` |
+| `billing.penalty_rate_bps` | `CL_PENALTY_RATE_BPS` |
+| `billing.penalty_grace_days` | `CL_PENALTY_GRACE_DAYS` |
+| `billing.penalty_bill_due_days` | `CL_PENALTY_BILL_DUE_DAYS` |
+| `billing.recurring_day_of_month` | `CL_RECURRING_DAY_OF_MONTH` |
+| `billing.recurring_hour` | `CL_RECURRING_HOUR` |
+| `notifications.fanout_batch_size` | `CL_NOTIFICATION_FANOUT_BATCH_SIZE` |
+| `receipts.number_prefix` | `CL_RECEIPT_NUMBER_PREFIX` |
+| `idempotency.ttl_hours` | `CL_IDEMPOTENCY_TTL_HOURS` |
+| `backups.retention_days` | `CL_BACKUP_RETENTION_DAYS` |
+| `backups.source_path` | `CL_BACKUP_SOURCE_PATH` |
+| `backups.target_dir` | `CL_BACKUP_TARGET_DIR` |
+| `auth.password_min_length` | `CL_PASSWORD_MIN_LENGTH` |
+| `auth.login_lock_threshold` | `CL_LOGIN_LOCK_THRESHOLD` |
+| `auth.login_lock_window_minutes` | `CL_LOGIN_LOCK_WINDOW_MINUTES` |
+| `auth.login_lock_duration_minutes` | `CL_LOGIN_LOCK_DURATION_MINUTES` |
+| `auth.token_ttl_minutes` | `CL_TOKEN_TTL_MINUTES` |
+| `observability.circuit_trip_bps` | `CL_CIRCUIT_TRIP_BPS` |
+| `observability.circuit_reset_bps` | `CL_CIRCUIT_RESET_BPS` |
+| `observability.circuit_window_seconds` | `CL_CIRCUIT_WINDOW_SECONDS` |
 
 ---
 
@@ -166,8 +201,8 @@ The following endpoint groups became live in this phase (controllers, routes, te
 
 | Group | Path Prefix | Key Endpoints |
 |---|---|---|
-| Discussions | `/api/v1/courses/{id}/threads`, `/api/v1/threads/*`, `/api/v1/posts/*` | Create/edit threads, posts, comments; sensitive-word filter; @mentions |
-| Moderation | `/api/v1/moderation/*` | Hide/restore/lock content; reports queue; audit log |
+| Discussions | `/api/v1/threads/*`, `/api/v1/posts/*` | Create/edit threads, posts, comments; sensitive-word filter; @mentions |
+| Moderation | `/api/v1/admin/moderation/*`, `/api/v1/admin/threads/*` | Queue/history plus hide/restore/lock actions; audit log |
 | Notifications | `/api/v1/notifications/*` | List, unread-count, bulk-mark-read, per-category preferences |
 | Orders | `/api/v1/orders/*` | Create order with tax snapshot; timeline; auto-close |
 | Payments | `/api/v1/orders/{id}/payment*` | Initiate + complete (idempotent); receipt generation |
@@ -176,7 +211,7 @@ The following endpoint groups became live in this phase (controllers, routes, te
 | Ledger | `/api/v1/admin/ledger`, `/api/v1/admin/reconciliation*` | Admin read + resolve + summary |
 | Grade Items | `/api/v1/sections/{id}/grade-items/*` | CRUD + publish with student notifications |
 | Roster Import | `/api/v1/terms/{id}/roster-imports`, `/api/v1/roster-imports/{id}` | CSV upload; history; per-row error detail |
-| Enrollments | `/api/v1/enrollments/{id}/approve`, `/deny` | Staff approve/deny; sends outcome notification |
+| Enrollments | `/api/v1/enrollments/{id}/approve`, `/api/v1/enrollments/{id}/deny` | Staff approve/deny; sends outcome notification |
 | Appointments | `/api/v1/appointments/*` | CRUD; reschedule/cancel triggers change notifications |
 | Catalog / Fees | `/api/v1/catalog`, `/api/v1/admin/catalog/*`, `/api/v1/admin/fee-categories/*` | Catalog items; fee categories; tax rules |
 | Sensitive Words | `/api/v1/admin/sensitive-words/*` | Admin CRUD; audited |
@@ -201,33 +236,74 @@ API calls from the browser go to `http://localhost:5173/api/...`. The `frontend`
 
 ```bash
 cd repo
-
-# 1. Create the env file
-cp backend/.env.example backend/.env
-
-# 2. Fill required values in backend/.env:
-#    APP_KEY      — generate with: docker compose run --rm backend php artisan key:generate --show
-#    DB_PASSWORD  — a strong local password
-#    MYSQL_ROOT_PASSWORD — must be set for the mysql container to start
-#    BACKUP_ENCRYPTION_KEY    — 32-byte hex: openssl rand -hex 32
-#    DIAGNOSTIC_ENCRYPTION_KEY — 32-byte hex: openssl rand -hex 32
-
-# 3. Start the stack
+docker-compose up --build
+# or
 docker compose up --build
 ```
 
 After the stack starts:
-- Frontend: `http://localhost:5173/` — redirects to `/login`
-- Backend API: `http://localhost:8000/api/health` → `{"status":"ok",...}`
+- Frontend URL: `http://localhost:5173/` (redirects to `/login`)
+- Backend API URL: `http://localhost:8000/api/v1`
+- Health URL: `http://localhost:8000/api/health`
+
+### Verification Method
+
+Use these executable checks to confirm the system is working:
+
+```bash
+# Health verification
+curl -sS http://localhost:8000/api/health
+
+# Frontend availability verification
+curl -sI http://localhost:5173 | head -n 1
+```
+
+Authenticate with demo credentials and verify an authenticated API call:
+
+```bash
+TOKEN=$(curl -sS -X POST http://localhost:8000/api/v1/auth/login \
+	-H "Content-Type: application/json" \
+	-d '{"email":"student@example.com","password":"Password1234!"}' | \
+	php -r '$d=json_decode(stream_get_contents(STDIN), true); echo $d["data"]["token"] ?? "";')
+
+curl -sS http://localhost:8000/api/v1/auth/me \
+	-H "Authorization: Bearer ${TOKEN}" \
+	-H "Accept: application/json"
+```
 
 ### First-time database setup
 
-```bash
-# Run migrations
-docker compose exec backend php artisan migrate
+No manual DB setup is required. The backend container applies migrations on startup.
 
-# (Optional) Seed test data
-docker compose exec backend php artisan db:seed
+If you need to re-seed deterministic demo users and fixtures, use a Docker-contained command:
+
+```bash
+docker compose exec backend php artisan db:seed --class=Database\\Seeders\\E2eTestSeeder --force --no-interaction
+```
+
+### Demo Credentials
+
+Authentication is required.
+
+| Role | Email | Password |
+|---|---|---|
+| Student | `student@example.com` | `Password1234!` |
+| Teacher | `teacher@example.com` | `TeacherPass999!` |
+| Registrar | `registrar@example.com` | `RegistrarPass999!` |
+| Administrator | `admin@example.com` | `AdminPass999!` |
+
+### Idempotency Verification (API)
+
+Write endpoints protected by idempotency require `Idempotency-Key`.
+
+```bash
+IDEMPOTENCY_KEY=$(cat /proc/sys/kernel/random/uuid)
+
+curl -sS -X POST http://localhost:8000/api/v1/orders/1/payment/complete \
+	-H "Authorization: Bearer ${TOKEN}" \
+	-H "Content-Type: application/json" \
+	-H "Idempotency-Key: ${IDEMPOTENCY_KEY}" \
+	-d '{"payment_method":"cash","amount_cents":1000}'
 ```
 
 ### No HTTPS
@@ -264,7 +340,7 @@ bash run_tests.sh --suite=e2e           # E2E tests (requires frontend + backend
 
 **Note:** Frontend unit tests run in the `frontend-test` docker service (node builder stage, has node). They do **not** run in the `frontend` service (nginx runtime, no node).
 
-**Note:** E2E tests require `docker compose up -d frontend backend mysql` before running.
+**Note:** E2E tests are fully orchestrated by `run_tests.sh`; required services are started automatically.
 
 ---
 

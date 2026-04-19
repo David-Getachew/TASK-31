@@ -143,6 +143,24 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/views/admin/HealthView.vue'),
         meta: { requiresAuth: true, roles: ['administrator'] },
       },
+      {
+        path: 'admin/diagnostics',
+        name: 'admin-diagnostics',
+        component: () => import('@/views/admin/DiagnosticsAdminView.vue'),
+        meta: { requiresAuth: true, roles: ['administrator'] },
+      },
+      {
+        path: 'admin/backups',
+        name: 'admin-backups',
+        component: () => import('@/views/admin/BackupAdminView.vue'),
+        meta: { requiresAuth: true, roles: ['administrator'] },
+      },
+      {
+        path: 'admin/dr',
+        name: 'admin-dr',
+        component: () => import('@/views/admin/DRAdminView.vue'),
+        meta: { requiresAuth: true, roles: ['administrator'] },
+      },
     ],
   },
 

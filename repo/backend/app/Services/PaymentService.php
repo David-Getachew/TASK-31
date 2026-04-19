@@ -62,9 +62,7 @@ final class PaymentService
     public function complete(Order $order, PaymentAttempt $attempt, User $operator): Order
     {
         return DB::transaction(function () use ($order, $attempt, $operator): Order {
-            if ($order->status !== OrderStatus::PendingPayment) {
-                throw new RuntimeException('Order is not in pending_payment state.');
-            }
+            $newStatus = $this->stateMachine->transition($order->status, OrderTimelineEventEnum::Paid);
 
             if ($attempt->status !== PaymentStatus::Pending) {
                 throw new RuntimeException('Payment attempt is not in pending state.');
@@ -75,7 +73,6 @@ final class PaymentService
                 'completed_at' => now(),
             ]);
 
-            $newStatus = $this->stateMachine->transition($order->status, OrderTimelineEventEnum::Paid);
             $order->update([
                 'status'  => $newStatus,
                 'paid_at' => now(),

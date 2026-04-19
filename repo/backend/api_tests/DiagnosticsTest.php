@@ -6,13 +6,8 @@ use App\Enums\DiagnosticExportStatus;
 use App\Models\DiagnosticExport;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Queue;
 
 uses(RefreshDatabase::class);
-
-beforeEach(function () {
-    Queue::fake();
-});
 
 // POST /api/v1/admin/diagnostics/export
 test('admin can trigger a diagnostic export', function () {
@@ -23,7 +18,8 @@ test('admin can trigger a diagnostic export', function () {
         ->postJson('/api/v1/admin/diagnostics/export');
 
     $response->assertStatus(201)
-        ->assertJsonPath('data.status', DiagnosticExportStatus::Completed->value);
+        ->assertJsonPath('data.status', DiagnosticExportStatus::Completed->value)
+        ->assertJsonPath('data.initiated_by', $admin->id);
 
     $this->assertDatabaseHas('diagnostic_exports', [
         'initiated_by' => $admin->id,

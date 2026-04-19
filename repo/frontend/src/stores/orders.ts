@@ -6,6 +6,15 @@ import http from '@/adapters/http'
 import type { PaginatedResponse, ApiResponse } from '@/types'
 import { generateIdempotencyKey } from '@/adapters/http'
 
+function extractCollection<T>(payload: unknown): T[] {
+  if (Array.isArray(payload)) return payload as T[]
+  if (payload && typeof payload === 'object') {
+    const nested = (payload as { data?: unknown }).data
+    if (Array.isArray(nested)) return nested as T[]
+  }
+  return []
+}
+
 export const useOrdersStore = defineStore('orders', () => {
   const orders       = ref<Order[]>([])
   const activeOrder  = ref<Order | null>(null)
@@ -22,7 +31,7 @@ export const useOrdersStore = defineStore('orders', () => {
     error.value   = null
     try {
       const res    = await http.get<PaginatedResponse<CatalogItem>>('/catalog')
-      catalog.value = res.data.data
+      catalog.value = extractCollection<CatalogItem>(res.data.data)
     } catch (e: any) {
       error.value = e?.message ?? 'Failed to load catalog'
     } finally {
@@ -35,7 +44,7 @@ export const useOrdersStore = defineStore('orders', () => {
     error.value   = null
     try {
       const res    = await ordersAdapter.list()
-      orders.value = res.data.data
+      orders.value = extractCollection<Order>(res.data.data)
     } catch (e: any) {
       error.value = e?.message ?? 'Failed to load orders'
     } finally {

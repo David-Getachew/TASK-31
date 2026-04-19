@@ -10,6 +10,10 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
+beforeEach(function (): void {
+    RequestMetric::query()->delete();
+});
+
 function seedMetrics(int $total, int $errors, int $ageMins = 1): void
 {
     $ts = now()->subMinutes($ageMins);

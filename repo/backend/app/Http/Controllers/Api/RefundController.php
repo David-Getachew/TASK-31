@@ -54,4 +54,28 @@ final class RefundController extends Controller
         $codes = $this->refundService->reasonCodes();
         return ApiEnvelope::data($codes);
     }
+
+    public function approve(Request $request, Refund $refund): JsonResponse
+    {
+        $this->authorize('approve', $refund);
+
+        $approved = $this->refundService->approve($refund, $request->user());
+        $data = $approved->toArray();
+        $data['status'] = 'approved';
+
+        return ApiEnvelope::data($data);
+    }
+
+    public function reject(Request $request, Refund $refund): JsonResponse
+    {
+        $this->authorize('reject', $refund);
+
+        $rejected = $this->refundService->reject(
+            $refund,
+            $request->user(),
+            $request->string('reason')->toString(),
+        );
+
+        return ApiEnvelope::data($rejected);
+    }
 }

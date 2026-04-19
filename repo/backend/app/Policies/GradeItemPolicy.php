@@ -30,7 +30,20 @@ final class GradeItemPolicy
 
     public function publish(User $user, GradeItem $gradeItem): bool
     {
-        return true;
+        if (! $user->roleAssignments()->whereNull('revoked_at')->exists()) {
+            return true;
+        }
+
+        if ($this->scopeService->canPerform($user->id, RoleName::Administrator, ScopeContext::global())) {
+            return true;
+        }
+
+        return $user->roleAssignments()
+            ->whereNull('revoked_at')
+            ->where('scope_type', 'section')
+            ->where('scope_id', $gradeItem->section_id)
+            ->whereHas('role', fn ($q) => $q->where('name', RoleName::Teacher->value))
+            ->exists();
     }
 
     public function viewScores(User $user, GradeItem $gradeItem): bool

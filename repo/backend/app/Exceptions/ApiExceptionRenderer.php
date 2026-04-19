@@ -7,6 +7,7 @@ namespace App\Exceptions;
 use App\Http\Responses\ApiEnvelope;
 use CampusLearn\Support\Exceptions\AccountLocked;
 use CampusLearn\Support\Exceptions\EditWindowExpired;
+use CampusLearn\Support\Exceptions\ConflictException;
 use CampusLearn\Support\Exceptions\IdempotencyReplay;
 use CampusLearn\Support\Exceptions\InvalidCredentials;
 use CampusLearn\Support\Exceptions\InvalidStateTransition;
@@ -74,10 +75,15 @@ final class ApiExceptionRenderer
                 $e->getMessage(),
                 409,
             ),
+            $e instanceof ConflictException => ApiEnvelope::error(
+                'INTERNAL_ERROR',
+                $e->getMessage(),
+                409,
+            ),
             $e instanceof InvalidStateTransition => ApiEnvelope::error(
                 'INVALID_STATE_TRANSITION',
                 $e->getMessage(),
-                409,
+                422,
             ),
             $e instanceof EditWindowExpired => ApiEnvelope::error(
                 'EDIT_WINDOW_EXPIRED',

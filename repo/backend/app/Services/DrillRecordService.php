@@ -31,7 +31,7 @@ final class DrillRecordService
                 'drill_date'       => $data['drill_date'],
                 'operator_user_id' => $actor->id,
                 'outcome'          => $data['outcome'],
-                'notes'            => $data['notes'] ?? null,
+                'notes'            => $data['notes'] ?? '',
             ]);
 
             $this->audit->record($actor->id, 'dr_drill.recorded', 'dr_drill_record', $drill->id, [
